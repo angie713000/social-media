@@ -67,6 +67,11 @@ add("LI2", "2026-12-02", "A unit that will sit empty over the holidays: four thi
     extra=["It comes one day after the Dec 1 year-end calendar post. The two are complementary: the calendar says when, this video says what."])
 
 
+import kn_timeback as _KT
+
+_KT.apply_linkedin(sys.modules[__name__])
+
+
 def spoken(p):
     return " ".join(p["beats"])
 
@@ -115,6 +120,10 @@ def draft_info(p):
 
 
 # ---------------------------------------------------------------- HTML
+def tchip(p):
+    return chipx(p["type"], "dato" if p["type"] == "Time back" else "ref") + " "
+
+
 def dlabel(p):
     return TH.dlabel(p)
 
@@ -149,7 +158,8 @@ def piece(p):
         '<div class="slot"><div class="when">'
         f"<b>{e(day)}</b><span>11 AM</span></div>"
         f'<div class="what"><p class="what-t">LinkedIn video: {e(p["title"])}</p>'
-        f'<p class="what-m">LinkedIn · AI presenter video, about 30 s {chipx("Draft · add video", "hip")}</p></div></div>'
+        f'<p class="what-m">LinkedIn · AI presenter video, about 30 s {tchip(p)}{chipx("Draft · add video", "hip")} {chipx(p["chip"], "hip")}</p></div></div>'
+        f'<p class="angle"><b>Angle:</b> {e(p["angle"])}</p>'
         f"{body}</article>"
     )
 
@@ -157,7 +167,7 @@ def piece(p):
 def board_row(p):
     return (
         f"<tr><th scope='row'>{e(dlabel(p))} · 11 AM</th><td>LinkedIn</td>"
-        f"<td>Video: {e(p['title'])}</td><td>{chipx('Draft · add video', 'hip')}</td></tr>"
+        f"<td>Video: {e(p['title'])}</td><td>{tchip(p)}{chipx(p['chip'], 'hip')}</td></tr>"
     )
 
 
@@ -167,7 +177,7 @@ def overview_section():
         B.callout(
             "Two videos for LinkedIn, on top of the eight text and carousel posts: Wednesday Nov 25 and Wednesday Dec 2 at 11 AM New York time. "
             "Each video is about 30 seconds, square, with a different AI-generated presenter who talks to the camera in a B2B tone for property managers and office teams. "
-            "They sit on Wednesdays so no existing draft changes, and the posts already scheduled for Nov 10 to Nov 19 are untouched. "
+            "They sit on Wednesdays so no existing draft moves, and the posts already scheduled for Nov 10 to Nov 19 are not affected by these two videos. "
             "The script, video prompts and text are inside weeks 3 and 4.",
             "Format.",
         )
@@ -186,8 +196,8 @@ def overview_section():
     rs += B.section("LinkedIn videos: how they differ from the TikToks", how)
     checks = [
         "**Disclosure.** Both texts end with \"AI-generated video.\" Metricool has no AI label field for LinkedIn, so keep that line.",
-        "**The presenter is a host.** The scripts give tips. None says \"I clean units\" or \"our team\", because an invented person cannot speak as an employee or a customer.",
-        "**Claims.** The tips are general. No script promises results, timing or certifications.",
+        "**The presenter is a host.** The scripts give tips and invite the viewer to get time back. None says \"I clean units\" or \"our team\", because an invented person cannot speak as an employee or a customer.",
+        "**Claims.** The tips are general. No script promises results, hours saved or certifications. LI1 is a time-back piece and LI2 is a tip with a bridge.",
         "**Link.** Both texts point to the contact page with LinkedIn tracking tags, and the URL shortener is on, like the other LinkedIn drafts.",
         "**Dates.** Nov 25 is the day before Thanksgiving. Dec 2 follows the Dec 1 year-end calendar post. Tell me if you want either one moved.",
         "**Services.** The scripts mention estimates, photos of the unit and scheduling a clean. Confirm the company offers all of them as written.",

@@ -270,10 +270,25 @@ kn += section(
     ),
 )
 kn += section(
+    "Mensaje central: tiempo recuperado",
+    callout(
+        "Contratar a Klean N Green NYC le devuelve al cliente tiempo para hacer lo que antes no podía. Cada pieza muestra el momento (un sábado libre, una visita sin preparación, un domingo propio) y después nombra el servicio. Los consejos se mantienen, pero cierran con un puente al servicio.",
+        "Mensaje.",
+    )
+    + tiles(
+        [
+            ("2 de 3", "piezas muestran qué hace el cliente con el tiempo ganado (25 de 38)", "dato"),
+            ("1 de 3", "piezas son consejos con un puente final al servicio (13 de 38)", "ref"),
+            ("1", "sola acción por pieza: presupuesto, mensaje o enlace", "ref"),
+        ]
+    )
+    + '<p class="note">Reglas: abrir con el momento y después el servicio; preguntar en lugar de afirmar («¿qué harías con tu sábado?»); sin cifras de horas ahorradas; sin historias de clientes inventadas (solo reseñas reales, con el texto exacto y una línea de enmarque); las escenas muestran tiempo libre, sin texto en las imágenes.</p>',
+)
+kn += section(
     "Tono y estilo: lo que se ve y qué ajustar",
     traits(
         [
-            ("Enfoque", "Centrado en la lista de servicios.", "Abrir con el problema del cliente (una unidad lista para el próximo inquilino, una oficina limpia el lunes) y nombrar el servicio después."),
+            ("Enfoque", "Centrado en la lista de servicios.", "Abrir con el tiempo que recupera el cliente (un sábado libre, una visita sin preparación, una semana de relevos sin limpiar) y nombrar el servicio después."),
             ("Cierre", "«Request a free estimate» con el mismo enlace en las 4 publicaciones de LinkedIn.", "Una sola acción por publicación, alternando entre pedir presupuesto, descargar un checklist y escribir por mensaje."),
             ("Formato en Instagram", "Carruseles: lista de servicios y checklist «Weekend reset».", "Mantener los carruseles tipo checklist. La lista de servicios pasa a una historia destacada."),
             ("Nombre", "Cambia según el canal.", "Usar «Klean N Green NYC» en perfil, firma y publicaciones."),
@@ -289,12 +304,14 @@ kn += section(
         [
             "Pasos concretos, tiempos reales y resultados visibles.",
             "Un tema por publicación, con lenguaje que entiende un administrador de edificio y un inquilino.",
+            "Preguntas que invitan a imaginar el tiempo libre: «What would you do with your Saturday?».",
             "Inglés como idioma principal, por el mercado de Nueva York.",
         ],
         [
             "Superlativos como «the best» sin respaldo.",
             "Afirmaciones ecológicas sin indicar qué productos se usan.",
             "Tecnicismos de limpieza industrial.",
+            "Cifras de horas ahorradas y testimonios o historias de clientes inventados.",
         ],
         "Si la clientela incluye hogares hispanohablantes, agregar una versión en español de las publicaciones de Instagram (por confirmar).",
     ),
@@ -303,11 +320,8 @@ kn += section(
     "Qué publicar",
     pillars(
         [
-            ("Checklists y guías", "30%", "Listas cortas y guardables: «Turnover week», «Sunday reset».", "Carrusel o publicación de texto en LinkedIn"),
-            ("Antes y después", "20%", "Trabajos reales con autorización del cliente.", "Carrusel de 2 a 4 imágenes"),
-            ("Servicios explicados", "20%", "Qué incluye la limpieza de oficinas, de hogares y para administración de propiedades.", "Texto en LinkedIn o historia destacada"),
-            ("Equipo y proceso", "15%", "Quién limpia, con qué productos y cómo se verifica el trabajo.", "Foto o Reel corto"),
-            ("Reseñas", "15%", "Texto exacto de la reseña, con permiso de quien la escribió.", "Imagen única o publicación de texto"),
+            ("Tiempo recuperado", "65%", "Escenas de lo que el cliente hace con el tiempo ganado, servicios explicados desde lo que dejan de hacer, reseñas reales con una línea sobre el tiempo y antes y después de trabajos autorizados.", "Imagen única, carrusel, Reel, publicación en LinkedIn"),
+            ("Consejos con puente", "35%", "Checklists, mitos y rutinas cortas y guardables («Turnover week», «Sunday reset»). Cierran con una línea que lleva al servicio, sin pasar de una acción por pieza.", "Carrusel, Reel, TikTok, texto en LinkedIn"),
         ]
     ),
 )
@@ -319,10 +333,10 @@ kn += section(
     )
     + slots(
         [
-            ("Mar", "11:00", "Guía o checklist para administradores y oficinas", "LinkedIn", "ref", "En LinkedIn, las 11:00 son el tramo más alto del martes."),
-            ("Mié", "12:00", "Carrusel educativo o antes y después", "Instagram y Facebook", "ref", "Miércoles a las 12:00 es el pico de Facebook. En Instagram se usa el mismo horario hasta tener datos."),
-            ("Jue", "11:00", "Servicio explicado o reseña", "LinkedIn", "ref", "En LinkedIn, las 11:00 son el tramo más alto del jueves."),
-            ("Dom", "18:00", "«Sunday reset»: checklist corto para hogares", "Instagram, Reel o carrusel", "hip", "Probar durante 4 semanas y comparar con el tráfico del miércoles."),
+            ("Mar", "11:00", "Guía o checklist para administradores y oficinas, con puente al servicio", "LinkedIn", "ref", "En LinkedIn, las 11:00 son el tramo más alto del martes."),
+            ("Mié", "12:00", "Carrusel de consejos o escena de tiempo recuperado", "Instagram y Facebook", "ref", "Miércoles a las 12:00 es el pico de Facebook. En Instagram se usa el mismo horario hasta tener datos."),
+            ("Jue", "11:00", "Servicio explicado desde el tiempo que devuelve, o reseña", "LinkedIn", "ref", "En LinkedIn, las 11:00 son el tramo más alto del jueves."),
+            ("Dom", "18:00", "«Sunday reset» o «el domingo es tuyo»: hogares", "Instagram, Reel o carrusel", "hip", "Probar durante 4 semanas y comparar con el tráfico del miércoles."),
         ]
     )
     + '<p class="note">En LinkedIn, el tramo de las 11:00 es el más alto de martes a viernes, con tramos secundarios a las 10:00 y a las 13:00. El viernes marca el índice más alto de la semana y el martes el más bajo de esos cuatro días: desde la tercera semana, probar el viernes en lugar del martes. Con un solo seguidor, el alcance depende de que el dueño y el equipo compartan cada publicación desde sus perfiles personales y envíen solicitudes de conexión a administradores de propiedades. El Perfil de Empresa de Google lleva una publicación semanal los lunes.</p>',
@@ -337,18 +351,22 @@ kn += section(
 )
 kn += section(
     "Textos listos para adaptar",
-    '<p class="lead-s">Los datos entre corchetes se completan con información real del negocio. Crear el archivo descargable antes de publicar el primer texto.</p>'
+    '<p class="lead-s">Ejemplos de las dos familias de piezas. Los datos entre corchetes se completan con información real del negocio. Los textos completos de cada pieza están en la pestaña de contenidos de Klean N Green NYC.</p>'
     + copybox(
-        "LinkedIn: checklist para administradores",
-        "Turnover week: 5 checks before the next tenant walks in.\n\n1. Kitchen: inside the oven, fridge and cabinets.\n2. Bathrooms: grout, fixtures and exhaust fans.\n3. Windows: glass, tracks and sills.\n4. Floors: edges and corners, not only the center.\n5. Final walkthrough with photos.\n\n[Descripción real del servicio para propiedades en NYC.]\nWant this checklist as a printable PDF? Message us and we will send it.",
+        "Tiempo recuperado, Instagram: escena",
+        "What would you do with your Saturday if the cleaning was already done?\nA long breakfast. A walk. That project you keep pushing back.\nMessage us for a free estimate and take the day.\n\n#NYCCleaning #ResidentialCleaning #CleaningService #ApartmentCleaning #NYCHome",
     )
     + copybox(
-        "Instagram: carrusel «Sunday reset»",
-        "Sunday reset: 20 minutes, 6 spots.\n\nSlide 1: Sink and counters\nSlide 2: Bathroom mirror and faucet\nSlide 3: Floors at the entrance\nSlide 4: Trash and recycling\nSlide 5: Bedding\nSlide 6: Fridge shelf cleanup\n\nSave this for next Sunday.",
+        "Consejo con puente, LinkedIn: checklist para administradores",
+        "Turnover week should not take over your week.\n\nBetween tenants, a unit needs five checks:\n1. Kitchen: inside the oven, fridge and cabinets.\n2. Bathrooms: grout, fixtures and exhaust fans.\n3. Windows: glass, tracks and sills.\n4. Floors: edges and corners, not only the center.\n5. Final walkthrough with photos.\n\nDone by you, that is a list to run and re-run. Done by us, it is a handover with photos, and your hours go to tenants, showings and the next unit.\n\nProperty managers in NYC: tell us how many units you turn over each month and we will scope it.\n\n#NYCCleaning #PropertyManagement #CommercialCleaning",
     )
     + copybox(
-        "LinkedIn: reseña de un cliente",
-        "\"[Texto exacto de la reseña, con permiso de quien la escribió]\"\n[Nombre o cargo, si lo autoriza]\n\nWhat it took: [qué se hizo, en cuánto tiempo y en qué tipo de espacio].\n\nRequest a free estimate: [enlace con UTM]",
+        "Tiempo recuperado, LinkedIn: reseña de un cliente",
+        "\"[Texto exacto de la reseña, con permiso de quien la escribió]\"\n[Nombre o cargo, si lo autoriza]\n\nWhat stood out for this client: [lo que se menciona en la reseña]. [Una línea que lo conecte con el tiempo del cliente, sin inventar datos.]\n\nRequest a free estimate: [enlace con UTM]",
+    )
+    + copybox(
+        "Líneas puente para cerrar un consejo",
+        "Save it for your cleaning day, or hand the list to us and spend that time elsewhere.\nOr hand it to us and keep your time.\nWant the whole day with your guests? Message us for the cleanup.\nIf you would rather spend that time elsewhere, message us for a free estimate.",
     ),
 )
 kn += section(

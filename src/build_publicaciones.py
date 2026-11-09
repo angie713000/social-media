@@ -457,14 +457,25 @@ def meta_box(items):
     return '<ul class="checks mini">' + "".join(f"<li>{fmt(x)}</li>" for x in items) + "</ul>"
 
 
+PIECE_META = {}  # (day, hour) -> dict(type, tk, angle, mode); filled by kn_timeback.apply
+
+
 def piece(day, hour, title, nets, formato, status, body):
+    m = PIECE_META.get((day, hour))
+    chips = chipx(status, KIND[status])
+    angle = ""
+    if m:
+        chips = chipx(m["type"], m["tk"]) + " " + chips
+        if m["mode"] == "draft":
+            chips += " " + chipx(S_NEW, "hip")
+        angle = f'<p class="angle"><b>Angle:</b> {e(m["angle"])}</p>'
     return (
         '<article class="piece">'
         '<div class="slot"><div class="when">'
         f"<b>{e(day)}</b><span>{e(hour)}</span></div>"
         f'<div class="what"><p class="what-t">{e(title)}</p>'
-        f'<p class="what-m">{e(nets)} · {e(formato)} {chipx(status, KIND[status])}</p></div></div>'
-        f"{body}</article>"
+        f'<p class="what-m">{e(nets)} · {e(formato)} {chips}</p></div></div>'
+        f"{angle}{body}</article>"
     )
 
 
@@ -1029,37 +1040,38 @@ def single_piece(key, day, hour):
     return piece(day, hour, "Single image: " + head, "Instagram and Facebook" if fb else "Instagram", "Single image", S_IMG, body)
 
 
+def sched_piece(key):
+    """Weeks 1 and 2: the post is already scheduled in Metricool with its finished media. Only the text changes."""
+    d = SCHED[key]
+    day, hour = key
+    notes = meta_box([
+        "**Already scheduled in Metricool** with its finished media. Nothing has been changed there.",
+        d["media"],
+        "To apply it after your approval: edit the text of the scheduled post in Metricool. Do not delete and recreate it, so its time and media stay.",
+    ])
+    parts = [det("Status and media", notes, True)]
+    parts.append(det("Proposed text (replaces the scheduled one)", "".join(B.copybox(lab, txt) for lab, txt in d["new"]), True))
+    parts.append(det("Scheduled today (unchanged until you approve)", "".join(B.copybox(lab, txt) for lab, txt in d["old"]), False))
+    for summary, bullets, boxes in d["extra"]:
+        parts.append(det(summary, meta_box(bullets) + "".join(B.copybox(lab, txt) for lab, txt in boxes), False))
+    return piece(day, hour, d["title"], d["nets"], d["formato"], S_SCHED, "".join(parts))
+
+
+import kn_timeback  # noqa: E402  (time-back strategy: applies new texts and per-piece metadata)
+
+kn_timeback.apply(globals())
+
 W = {}
 
-W[1] = (
-    gbp_piece("2026-11-09", "What Klean N Green NYC does")
-    + li_piece("2026-11-10", "Tue, Nov 10", "11 AM", "Turnover week: 5 checks")
-    + ig_piece("11-11", "Wed, Nov 11", "12 PM", "Kitchen: 6 spots people miss", "Instagram and Facebook", "8-slide carousel",
-               [SLIDES_FMT.format(n=8), "Cover with a large number 6; one idea per slide; the last slide only carries the save prompt."])
-    + li_piece("2026-11-12", "Thu, Nov 12", "11 AM", "What office cleaning includes")
-    + reel_piece("11-13", "Fri, Nov 13", "12 PM")
-    + single_piece("11-14", "Sat, Nov 14", "11 AM")
-    + ig_piece("11-15", "Sun, Nov 15", "6 PM", "Sunday reset: 20 minutes, 6 spots", "Instagram", "8-slide carousel",
-               [SLIDES_FMT.format(n=8), "Minutes visible on every slide; they add up to 20."])
-)
+W[1] = "".join(sched_piece(k) for k in [
+    ("Mon, Nov 9", "10 AM"), ("Tue, Nov 10", "11 AM"), ("Wed, Nov 11", "12 PM"), ("Thu, Nov 12", "11 AM"),
+    ("Fri, Nov 13", "12 PM"), ("Sat, Nov 14", "11 AM"), ("Sun, Nov 15", "6 PM"),
+])
 
-W[2] = (
-    gbp_piece("2026-11-16", "Cleans between tenants or guests")
-    + li_piece("2026-11-17", "Tue, Nov 17", "11 AM", "How a unit is verified before handover")
-    + single_piece("11-18", "Wed, Nov 18", "12 PM")
-    + piece("Thu, Nov 19", "11 AM", "Customer review", "LinkedIn", "Text with optional image", S_DRAFT,
-            det("Text and hashtags",
-                meta_box(["Real Google review from a client, used without the name: the attribution says \"Client\". The review text is unchanged, including the exclamation marks.",
-                          "Saved in Metricool as a text draft for 11 AM, with the testimonials page link (shortened at publishing time).",
-                          "The image is optional. If you use it, the quote card below is 4:5, 1080 x 1350 px, and it replaces the link preview card."])
-                + B.copybox("LinkedIn text", LI_REVIEW), True)
-            + det("Optional image: quote card prompt", B.copybox("Quote card prompt (complete, paste into the generator)", REVIEW_PROMPT), False)
-            + page_img_det(page_of(LI_REVIEW)))
-    + reel_piece("11-20", "Fri, Nov 20", "12 PM")
-    + single_piece("11-21", "Sat, Nov 21", "11 AM")
-    + ig_piece("11-22", "Sun, Nov 22", "6 PM", "Entryway: first impression in 5 points", "Instagram", "7-slide carousel",
-               [SLIDES_FMT.format(n=7), "One clear photo per spot, in the same style on every slide."])
-)
+W[2] = "".join(sched_piece(k) for k in [
+    ("Mon, Nov 16", "10 AM"), ("Tue, Nov 17", "11 AM"), ("Wed, Nov 18", "12 PM"), ("Thu, Nov 19", "11 AM"),
+    ("Fri, Nov 20", "12 PM"), ("Sat, Nov 21", "11 AM"), ("Sun, Nov 22", "6 PM"),
+])
 
 W[3] = (
     gbp_piece("2026-11-23", "Office cleaning before the holidays")
@@ -1087,41 +1099,48 @@ W[4] = (
 # ---------------------------------------------------------------------------
 # OVERVIEW
 # ---------------------------------------------------------------------------
-board_rows = [
-    ("Mon, Nov 9 · 10 AM", "Google", "What Klean N Green NYC does", S_DRAFT),
-    ("Tue, Nov 10 · 11 AM", "LinkedIn", "Turnover week: 5 checks", S_DRAFT),
-    ("Wed, Nov 11 · 12 PM", "Instagram and Facebook", "Carousel: Kitchen, 6 spots people miss", S_IMG),
-    ("Thu, Nov 12 · 11 AM", "LinkedIn", "What office cleaning includes", S_DRAFT),
-    ("Fri, Nov 13 · 12 PM", "Instagram and Facebook", "Reel: 3 quick bathroom wipes", S_VID),
-    ("Sat, Nov 14 · 11 AM", "Instagram and Facebook", "Single image: First clean, 4 details", S_IMG),
-    ("Sun, Nov 15 · 6 PM", "Instagram", "Carousel: Sunday reset", S_IMG),
-    ("Mon, Nov 16 · 10 AM", "Google", "Cleans between tenants or guests", S_DRAFT),
-    ("Tue, Nov 17 · 11 AM", "LinkedIn", "How a unit is verified", S_DRAFT),
-    ("Wed, Nov 18 · 12 PM", "Instagram and Facebook", "Single image: Guests in 20 minutes", S_IMG),
-    ("Thu, Nov 19 · 11 AM", "LinkedIn", "Customer review", S_DRAFT),
-    ("Fri, Nov 20 · 12 PM", "Instagram and Facebook", "Reel: Window tracks", S_VID),
-    ("Sat, Nov 21 · 11 AM", "Instagram and Facebook", "Single image: How often to clean", S_IMG),
-    ("Sun, Nov 22 · 6 PM", "Instagram", "Carousel: Entryway in 5 points", S_IMG),
-    ("Mon, Nov 23 · 10 AM", "Google", "Office cleaning before the holidays", S_DRAFT),
-    ("Tue, Nov 24 · 11 AM", "LinkedIn", "Carousel: Year-end office checklist", S_IMG),
-    ("Wed, Nov 25 · 12 PM", "Instagram and Facebook", "Carousel: Kitchen in 30 minutes after dinner", S_IMG),
-    ("Thu, Nov 26 · 11 AM", "LinkedIn and Facebook", "Thanksgiving thank-you", S_DRAFT),
-    ("Fri, Nov 27 · 12 PM", "Instagram and Facebook", "Reel: Guest room reset", S_VID),
-    ("Sat, Nov 28 · 11 AM", "Instagram and Facebook", "Single image: Guests in December", S_IMG),
-    ("Sun, Nov 29 · 6 PM", "Instagram", "Single image: Sunday reset after the long weekend", S_IMG),
-    ("Mon, Nov 30 · 10 AM", "Google", "Recurring home cleaning", S_DRAFT),
-    ("Tue, Dec 1 · 11 AM", "LinkedIn", "Year-end calendar", S_DRAFT),
-    ("Wed, Dec 2 · 12 PM", "Instagram and Facebook", "Carousel: Before and after of a real job", S_PHOTOS),
-    ("Thu, Dec 3 · 11 AM", "LinkedIn", "Carousel: What property management cleaning includes", S_IMG),
-    ("Fri, Dec 4 · 12 PM", "Instagram and Facebook", "Reel: High-touch spots", S_VID),
-    ("Sat, Dec 5 · 11 AM", "Instagram and Facebook", "Single image: January clean", S_IMG),
-    ("Sun, Dec 6 · 6 PM", "Instagram", "Reel: Winter entryway, 3 quick fixes", S_VID),
+BOARD = [
+    ("Mon, Nov 9", "10 AM", "Google", "What Klean N Green NYC does"),
+    ("Tue, Nov 10", "11 AM", "LinkedIn", "Turnover week: 5 checks"),
+    ("Wed, Nov 11", "12 PM", "Instagram and Facebook", "Carousel: Kitchen, 6 spots people miss"),
+    ("Thu, Nov 12", "11 AM", "LinkedIn", "What office cleaning includes"),
+    ("Fri, Nov 13", "12 PM", "Instagram and Facebook", "Reel: 3 quick bathroom wipes"),
+    ("Sat, Nov 14", "11 AM", "Instagram and Facebook", "Single image: First clean, 4 details"),
+    ("Sun, Nov 15", "6 PM", "Instagram", "Carousel: Sunday reset"),
+    ("Mon, Nov 16", "10 AM", "Google", "Cleans between tenants or guests"),
+    ("Tue, Nov 17", "11 AM", "LinkedIn", "How a unit is verified"),
+    ("Wed, Nov 18", "12 PM", "Instagram and Facebook", "Single image: Guests in 20 minutes"),
+    ("Thu, Nov 19", "11 AM", "LinkedIn", "Customer review"),
+    ("Fri, Nov 20", "12 PM", "Instagram and Facebook", "Reel: Window tracks"),
+    ("Sat, Nov 21", "11 AM", "Instagram and Facebook", "Single image: How often to clean"),
+    ("Sun, Nov 22", "6 PM", "Instagram", "Carousel: Entryway in 5 points"),
+    ("Mon, Nov 23", "10 AM", "Google", "Office cleaning before the holidays"),
+    ("Tue, Nov 24", "11 AM", "LinkedIn", "Carousel: Year-end office checklist"),
+    ("Wed, Nov 25", "12 PM", "Instagram and Facebook", "Carousel: Kitchen in 30 minutes after dinner"),
+    ("Thu, Nov 26", "11 AM", "LinkedIn and Facebook", "Thanksgiving thank-you"),
+    ("Fri, Nov 27", "12 PM", "Instagram and Facebook", "Reel: Guests leave, your afternoon stays yours"),
+    ("Sat, Nov 28", "11 AM", "Instagram and Facebook", "Single image: Guests in December"),
+    ("Sun, Nov 29", "6 PM", "Instagram", "Single image: The Sunday after the long weekend"),
+    ("Mon, Nov 30", "10 AM", "Google", "Recurring home cleaning"),
+    ("Tue, Dec 1", "11 AM", "LinkedIn", "Year-end calendar"),
+    ("Wed, Dec 2", "12 PM", "Instagram and Facebook", "Carousel: Before and after of a real job"),
+    ("Thu, Dec 3", "11 AM", "LinkedIn", "Carousel: What property management cleaning includes"),
+    ("Fri, Dec 4", "12 PM", "Instagram and Facebook", "Reel: High-touch spots"),
+    ("Sat, Dec 5", "11 AM", "Instagram and Facebook", "Single image: January weekends"),
+    ("Sun, Dec 6", "6 PM", "Instagram", "Reel: Winter entryway, already handled"),
 ]
+
+
+def board_status(day, hour):
+    m = PIECE_META[(day, hour)]
+    return chipx(m["type"], m["tk"]) + " " + chipx(S_SCHED if m["mode"] == "sched" else S_NEW, "hip")
+
+
 board = (
     '<div class="tablewrap"><table class="rev"><thead><tr><th>Date</th><th>Network</th><th>Piece</th><th>Status</th></tr></thead><tbody>'
     + "".join(
-        f"<tr><th scope='row'>{e(a)}</th><td>{e(b)}</td><td>{e(c)}</td><td>{chipx(d, KIND[d])}</td></tr>"
-        for a, b, c, d in board_rows
+        f"<tr><th scope='row'>{e(d)} · {e(h)}</th><td>{e(n)}</td><td>{e(t)}</td><td>{board_status(d, h)}</td></tr>"
+        for d, h, n, t in BOARD
     )
     + "</tbody></table></div>"
 )
@@ -1136,6 +1155,10 @@ formats = (
 )
 
 confirm = [
+    "**Time-back wording.** The copy says the service gives the reader time and asks what they would do with it. It promises no hours saved and never says what clients did with their time. Confirm you are comfortable with that line.",
+    "**Weeks 1 and 2.** Replacing the text of a scheduled post does not touch its image or video. Check that each new text still agrees with its media (the Nov 15 slides, for example, still say 20 minutes).",
+    "**Dec 2 before and after.** The text says \"The client's time spent on it: none.\" Keep that line only if the client did nothing for that job, and fill in the bracketed details first.",
+    "**Services named in the new copy.** Recurring plans (weekly, every two weeks, monthly), turnover and vacation-rental cleans, a clean planned before guests arrive, and holiday scheduling for offices and property managers. Confirm each is offered as written.",
     "**Vacant-unit service for property managers.** The LinkedIn texts talk about cleaning units between tenants. The website mentions vacation rentals and corporate housing, but not in those words.",
     "**Handover photos.** The texts for Nov 10, Nov 17 and Dec 3 say photos of the key areas are taken at handover. If that is not the case, remove those lines.",
     "**Service areas.** The Google post for Monday, Nov 9 mentions Manhattan, Brooklyn and Queens. The website also cites Jersey City and Hoboken.",
@@ -1147,29 +1170,59 @@ confirm = [
     "**Reel drafts.** Instagram holds the logo as a placeholder because Metricool does not accept a Reel without a file. Remove the logo and upload the video before scheduling.",
     "**Brooklyn location.** The Meta place \"Brooklyn, New York\" shows that name in the draft, but its stored map coordinates point to Colorado. If that matters, swap it for a Brooklyn business or neighborhood page.",
     "**Typography roles.** The website lists Jost and Cormorant Garamond without saying which is which. The prompts use Cormorant Garamond for headlines and Jost for body text and labels; tell me if it is the other way round and I will swap them.",
-    "**Google buttons in Metricool.** The four Google drafts hold only the text. The button (Book, Learn more, Call now) and the image are added in the Metricool editor; if the editor has no button option, put the link in the text and remove the \"Tap ...\" sentences.",
-    "**Phone number.** No post text includes it, because Google can reject posts with a phone number in the text. The \"Call now\" button on Nov 23 uses the number on the profile. The website footer shows (347) 833-4766 and the closing-slide design shows (347) 883-4766: confirm which one is correct before publishing.",
+    "**Google buttons in Metricool.** Nov 9 and Nov 16 are scheduled with their images; Nov 23 and Nov 30 are text-only drafts. Metricool has no button field for Google, so the link sits in the text; the button (Book or Learn more) is only set if you publish directly in Google.",
+    "**Phone number.** No post text includes it, because Google can reject posts with a phone number in the text. The website footer shows (347) 833-4766 and the closing-slide design shows (347) 883-4766: confirm which one is correct before publishing.",
     "**People in the images.** The people in the single images, and the hands in the carousels and Reels, are fictional and AI-generated, and they change from post to post in age, background and look on purpose. Clover (a gray tabby cat) is the only recurring character. The captions do not mention any of them. If you prefer real team members, tell me and the prompts are updated.",
     "**LinkedIn carousels.** Nov 24 and Dec 3 are text drafts that already have the PDF carousel option on. They need their images before they can go out; if the images are not ready in time, remove the \"Swipe through.\" sentence and publish them as text. Nov 17 is not a carousel: it is already scheduled with its image.",
     "**LinkedIn links.** Each post that links to the website now points to the page that matches its topic (checklist, testimonials, commercial, Brooklyn); only Nov 10 still links to Contact. Every link keeps its UTM tag and is shortened by Metricool.",
 ]
 
-rs = ""
+n_new_slides = sum(len(v[1]) for k, v in list(CAR.items()) + list(LICAR.items()) if k in ("11-25", "2026-11-24", "2026-12-03"))
+STRAT = B.section(
+    "Strategy: time back",
+    B.callout("Hiring Klean N Green NYC gives you time for what you could not fit in before. Every piece either shows what that time can become, or gives a useful tip and ends with a bridge to the service.", "The idea.")
+    + B.tiles([
+        ("25", "pieces show what you can do with the time: a Saturday, a host's evening, a property manager's week", "dato"),
+        ("13", "pieces stay as tips and close with a bridge to the service", "dato"),
+        ("15", "pieces are already scheduled with finished images or videos (weeks 1 and 2, plus the Nov 10 TikTok): only their text changes", "dato"),
+        ("23", "pieces are drafts: new text, and new scenes, scripts and prompts where the idea changed", "dato"),
+    ])
+    + '<div class="tablewrap"><table class="rev"><thead><tr><th>Audience</th><th>What the time is for</th><th>Where it shows up</th></tr></thead><tbody>'
+    "<tr><th scope='row'>Families and homes</th><td>Weekends, a slow breakfast, a walk, the call you keep postponing</td><td>Saturday and Sunday posts, Reels, Google</td></tr>"
+    "<tr><th scope='row'>Hosts</th><td>The door, the drinks and the guests, not the sponge</td><td>Nov 18, Nov 27, Nov 28, TikTok</td></tr>"
+    "<tr><th scope='row'>Rental hosts and landlords</th><td>Guest messages, showings and the listing</td><td>Google, Nov 16</td></tr>"
+    "<tr><th scope='row'>Property managers</th><td>Tenants, showings and inspections, instead of coordinating crews</td><td>LinkedIn: Nov 10, Nov 17, Dec 1, Dec 3</td></tr>"
+    "<tr><th scope='row'>Office managers and teams</th><td>People, vendors, projects and the year-end close</td><td>LinkedIn: Nov 12 and Nov 24; Google, Nov 23</td></tr>"
+    "</tbody></table></div>"
+    + '<ul class="checks">' + "".join(
+        f"<li>{fmt(x)}</li>"
+        for x in [
+            "**Lead with the moment, then the service.** Open with what the person gets: a Saturday, a quiet evening, an open calendar. The service is how they get there.",
+            "**Ask, do not claim.** \"What would you do with your Saturday?\" invites the reader. The copy never says what clients did with their time: no invented clients, stories or testimonials. The only client voice is the Nov 19 Google review, word for word.",
+            "**No hours-saved numbers.** The numbers that remain (5 checks, 20 minutes, 30 minutes) are steps inside tips, not promises.",
+            "**Tips stay, with a bridge.** One piece in three is a tip. It ends with one bridge line from the bank below.",
+            "**One call to action per piece:** a free estimate, a message or a scope.",
+            "**Scenes show the free time, not the work.** People and Clover appear after the work is done: reading, a mug at the window, waiting for guests.",
+            "**Weeks 1 and 2 keep their media.** Those posts are scheduled with finished images and videos, so the proposal changes only the text. Tip carousels and Reels carry the bridge in the caption, and three carousels have an optional extra closing slide.",
+        ]
+    ) + "</ul>"
+    + B.copybox("Bridge lines for tips (pick one per piece)", "\n".join(kn_timeback.BRIDGES)),
+    "The mix: about two pieces in three show the time, and one in three teaches and bridges.",
+)
+rs = STRAT
 rs += B.section(
     "What is ready and what is missing",
     B.tiles(
         [
-            ("28", "days, 28 drafts saved in Metricool, one for every day from Nov 9 to Dec 6 (Facebook and Instagram drafts carry the Brooklyn location)", "dato"),
-            ("%d" % sum(len(v[1]) for v in list(CAR.values()) + list(LICAR.values())), "slide prompts, one per image, for %d generated carousels: 4 for Instagram and Facebook (Nov 11, 15, 22 and 25) and 2 for LinkedIn (Nov 24 and Dec 3); none prints a slide number" % (len(CAR) + len(LICAR)), "dato"),
-            ("8", "LinkedIn drafts, all with text ready: 2 are carousels (Nov 24 and Dec 3), one is the Nov 19 customer review and one is the new Nov 26 Thanksgiving post", "dato"),
-            ("5", "Reels (four Fridays and Sunday, Dec 6), each with a continuity block, 3 Seedance scene prompts and a voiceover; the draft only waits for the video", "dato"),
-            ("4", "Google Business Profile drafts; image and button are added in the editor", "dato"),
-            ("6", "single-image posts (four Saturdays, Wed Nov 18 and Sun Nov 29), each with a text-free prompt with a different person in every image plus Clover the cat, alt text and captions", "dato"),
-            ("1", "piece that depends on real material: photos of a real job (Dec 2); the Nov 19 review is already in", "dato"),
+            ("15", "pieces already scheduled in Metricool with finished media: 14 posts in weeks 1 and 2 plus the Nov 10 TikTok. Only the text changes", "dato"),
+            ("23", "drafts hold the previous text. They get the new text, and the media is still to be made", "dato"),
+            ("%d" % n_new_slides, "slide prompts rewritten or kept for the three carousels of weeks 3 and 4 (Nov 24, Nov 25, Dec 3), plus 3 optional extra closing slides for the scheduled carousels", "dato"),
+            ("3", "Reels still to produce, all in weeks 3 and 4 (Nov 27, Dec 4, Dec 6); the Nov 13 and Nov 20 Reels are done", "dato"),
+            ("9", "scripts rewritten for AI-presenter videos: 7 TikToks (Nov 12 to Dec 3) and 2 LinkedIn videos; the Nov 10 TikTok keeps its finished video and changes only its caption", "dato"),
         ]
     )
     + B.callout(
-        "All 28 days already exist as drafts. What is left is media: the carousel and single-image files for Instagram and Facebook, the video for each Reel (the Reel drafts hold the logo as a placeholder), an image for three of the Google drafts, the slides for the two LinkedIn carousels and real photos for Dec 2. Nothing is published without approval.",
+        "Nothing in Metricool has changed. After you approve a piece I update it there: scheduled posts are edited in place, so their time and media stay, and drafts are replaced with the new text. A piece you do not approve stays as it is.",
         "Next step.",
     ),
     "Klean N Green NYC, Monday, November 9 to Sunday, December 6, 2026. All times are New York time.",
@@ -1246,8 +1299,8 @@ DUO_IDEAS = [
     ("Wed, Nov 18", "Guests in 20 minutes", "11-18", "She sets a fresh towel in the entry; Clover waits at the door under a clock."),
     ("Sat, Nov 21", "How often to clean", "11-21", "He studies a blank calendar over coffee; Clover sleeps nearby."),
     ("Thu, Nov 26", "Thanksgiving thank-you (optional image)", None, "Clover only, on the rug near the set table."),
-    ("Sat, Nov 28", "Guests in December", "11-28", "She makes the guest bed; Clover waits beside a suitcase."),
-    ("Sun, Nov 29", "Sunday reset", "11-29", "He vacuums the rug; Clover watches from the sofa."),
+    ("Sat, Nov 28", "Guests in December", "11-28", "She sits on the made guest bed with a mug; Clover waits beside a suitcase."),
+    ("Sun, Nov 29", "The Sunday after the long weekend", "11-29", "He reads on the sofa; Clover curls up at the other end."),
     ("Sat, Dec 5", "January clean", "12-05", "She stands at the window with a coffee; Clover sits on the sill, looking at the winter light."),
 ]
 duo_table = (
@@ -1387,10 +1440,10 @@ tabs = "".join(
     for k, (i, c, n) in enumerate(PANELS)
 )
 WEEK_TXT = {
-    1: ("Week 1", "November 9 to 15"),
-    2: ("Week 2", "November 16 to 22"),
-    3: ("Week 3", "November 23 to 29. Thursday the 26th is Thanksgiving: a short thank-you post goes out on LinkedIn and Facebook."),
-    4: ("Week 4", "November 30 to December 6"),
+    1: ("Week 1", "November 9 to 15. Already scheduled with finished media: only the text changes."),
+    2: ("Week 2", "November 16 to 22. Already scheduled with finished media: only the text changes."),
+    3: ("Week 3", "November 23 to 29. Drafts with new text and prompts. Thursday the 26th is Thanksgiving: a short thank-you post goes out on LinkedIn and Facebook."),
+    4: ("Week 4", "November 30 to December 6. Drafts with new text and prompts."),
 }
 panels = B.panel("resumen", "b-all", "Overview", "Image prompts, texts and hashtags for Klean N Green NYC over four weeks.", rs)
 for n in (1, 2, 3, 4):
@@ -1427,12 +1480,14 @@ EXTRA_CSS = """
 .specimen small{font-family:Jost,system-ui,sans-serif;font-size:12.5px;color:#54595F}
 .schem svg{display:block;width:100%;max-width:260px;margin:14px auto}
 .when b{font-size:13px;letter-spacing:.03em}
+.angle{margin:2px 8px 8px;font-size:14px;color:var(--muted)}
+.angle b{color:var(--ink)}
 """
 
 TOP = """<header class="top">
-<p class="eyebrow">Klean N Green NYC · November 9 to December 6, 2026</p>
+<p class="eyebrow">Klean N Green NYC · November 9 to December 6, 2026 · time-back strategy</p>
 <h1>Posts for weeks 1 to 4</h1>
-<p class="lead">A post every day for 28 days, on a rotation of networks, all saved as drafts in Metricool with the Brooklyn location on Facebook and Instagram. Every image prompt follows the website palette and typography (Jost and Cormorant Garamond) and prints no slide numbers. The Reels come as Seedance scenes. Dates and times are New York time.</p>
+<p class="lead">A post every day for 28 days, rewritten around one message: hiring Klean N Green NYC gives you time for what you could not fit in before. Weeks 1 and 2 are already scheduled in Metricool with finished media, so only their text changes; weeks 3 and 4 are drafts and change completely. Nothing in Metricool has been touched yet. Dates and times are New York time.</p>
 </header>"""
 
 FOOT = """<footer>

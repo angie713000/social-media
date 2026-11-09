@@ -25,6 +25,7 @@ Genera `contenidos-por-marca.html` en la raíz. Solo usa la biblioteca estándar
 | `build_publicaciones.py` | Posts de Klean NYC (semanas 1 a 4) |
 | `build_kg_publicaciones.py` | Posts de K&G Market y los Overview de ambas marcas |
 | `tiktok_data.py`, `tiktok_html.py` | Los 16 TikToks con presentador IA (guion, prompt, caption, borrador de Metricool) |
+| `kn_timeback.py` | Estrategia «tiempo recuperado» de Klean NYC: tipo de cada pieza (25 de tiempo recuperado, 13 de consejo con puente), textos nuevos de las semanas 1 a 4 y líneas puente |
 | `linkedin_video.py` | Los 2 videos de LinkedIn de Klean NYC (25 nov y 2 dic) |
 | `build_calendario.py` | Calendario de 3 meses en español de las cuatro marcas |
 | `build_unificado.py` | Une calendario y posts en el HTML final |
@@ -41,6 +42,12 @@ Genera `contenidos-por-marca.html` en la raíz. Solo usa la biblioteca estándar
 - Los cambios en el HTML no modifican Metricool, ni al revés. Si un cambio afecta a ambos, se hace en los dos.
 - Los borradores de Metricool no se pueden borrar desde la API: antes de crear muchos, conviene confirmar el plan.
 - Nada se publica en redes sin aprobación. No se tocan las publicaciones ya programadas.
+
+## Estrategia de Klean NYC: tiempo recuperado
+
+- Mensaje central: contratar a Klean N Green NYC le da al cliente tiempo para hacer lo que antes no podía. 2 de cada 3 piezas lo muestran; las demás son consejos que cierran con un puente al servicio.
+- Semanas 1 y 2 ya están programadas en Metricool con su imagen o video: solo se propone cambiar el texto (se muestra el texto actual y el nuevo). Semanas 3 y 4 están reescritas por completo como borradores.
+- Estado: propuesta para revisión. Metricool no se modifica hasta que cada pieza esté aprobada.
 
 ## Revisiones previstas
 

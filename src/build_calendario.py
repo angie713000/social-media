@@ -81,11 +81,11 @@ TT_ES = {
     "KG7": "Cómo elegir la yuca (y nunca comerla cruda)",
     "KG8": "Cinco productos para empezar a cocinar peruano y caribeño",
     "KN1": "Mito: más producto no limpia más",
-    "KN2": "Limpiar en orden: de arriba hacia abajo",
+    "KN2": "¿Qué harías con tu sábado, si la limpieza ya estuviera hecha?",
     "KN3": "Día de rotación: el orden que ahorra tiempo",
     "KN4": "Nunca mezcles estos dos productos de limpieza",
     "KN5": "Recibir invitados: 15 minutos antes de que lleguen",
-    "KN6": "Cuatro preguntas antes de contratar una empresa de limpieza",
+    "KN6": "Contratar una empresa de limpieza es recuperar tu tiempo: cuatro preguntas",
     "KN7": "Tres errores que esparcen la suciedad",
     "KN8": "Cuatro puntos para limpiar una vez al mes",
 }
@@ -98,13 +98,37 @@ def tt(pid):
     return row(wd, m, d, "18:00", f"TikTok: {TT_ES[pid]}",
                f"TikTok ({T.HANDLE[p['brand']]}), video de unos 18 s con presentador IA distinto en cada video",
                "hip",
-               "Borrador en Metricool con una foto provisoria: subir el video y marcar «contenido generado por IA». Guion y prompt en las pestañas Week 1 a Week 4 de esta marca.")
+               _kn_note(p, "Borrador en Metricool con una foto provisoria: subir el video y marcar «contenido generado por IA». Guion y prompt en las pestañas Week 1 a Week 4 de esta marca."))
+
+TIPO_ES = {"Time back": "Tiempo recuperado", "Tip + bridge": "Consejo con puente"}
+EST_PROG = "Ya programada en Metricool con sus medios terminados: solo se propone cambiar el texto, a la espera de tu aprobación."
+EST_BORR = "Borrador en Metricool con el texto anterior: se propone texto nuevo, a la espera de tu aprobación."
+
+
+def _kn_note(p, base):
+    """Nota de un TikTok o video de LinkedIn: tipo de pieza y estado, con el texto de siempre para K&G."""
+    if not p.get("type"):
+        return base
+    tipo = TIPO_ES[p["type"]]
+    if p["id"] == "KN1":
+        return f"**{tipo}.** Programado en Metricool con su video terminado (aviso al teléfono, sin publicación automática): solo se propone cambiar la descripción, a la espera de tu aprobación."
+    return f"**{tipo}.** {base} Guion nuevo propuesto; si el video ya está hecho, se conserva y solo cambia la descripción."
+
+
+def krow(wd, m, d, hour, title, meta, tipo, extra=""):
+    """Fila de Klean N Green NYC: tipo de pieza (estrategia de tiempo recuperado) y estado en Metricool."""
+    date = D(m, d)
+    prog = (date - START).days < 14
+    kind = "ref" if tipo == "TB" else "hip"
+    nota = f"**{TIPO_ES['Time back' if tipo == 'TB' else 'Tip + bridge']}.** " + (EST_PROG if prog else EST_BORR) + (" " + extra if extra else "")
+    return row(wd, m, d, hour, title, meta, kind, nota)
+
 
 import linkedin_video as LV
 
 LI_ES = {
-    "LI1": "Video: cuatro datos que enviar antes de contratar una limpieza",
-    "LI2": "Video: unidad vacía en las fiestas, cuatro cosas que hacer antes",
+    "LI1": "Video: cuatro datos que enviar y lo demás sale de tu lista",
+    "LI2": "Video: unidad vacía en las fiestas, cuatro cosas que hacer antes (o dejarlo en nuestras manos)",
 }
 
 
@@ -115,7 +139,7 @@ def li(pid):
     return row(wd, m, d, "11:00", LI_ES[pid],
                "LinkedIn, video cuadrado de unos 30 s con presentador IA, B2B",
                "hip",
-               "Borrador en Metricool solo con el texto (ya incluye «AI-generated video.»): subir el video y activar subtítulos. Guion y prompts en las pestañas Week 3 y Week 4 de esta marca.")
+               _kn_note(p, "Borrador en Metricool solo con el texto (ya incluye «AI-generated video.»): subir el video y activar subtítulos. Guion y prompts en las pestañas Week 3 y Week 4 de esta marca."))
 
 
 # ---------------------------------------------------------------------------
@@ -207,68 +231,88 @@ kg += section(
 # ---------------------------------------------------------------------------
 kn = ""
 kn += section(
+    "Estrategia de contenidos: tiempo recuperado",
+    callout(
+        "Contratar a Klean N Green NYC da tiempo para hacer lo que antes no se podía. Cada pieza muestra qué puede hacer la persona con ese tiempo (unas 2 de cada 3) o es un consejo útil que termina con un puente al servicio (1 de cada 3). Ninguna promete horas ahorradas ni cuenta lo que hicieron clientes reales con su tiempo.",
+        "Mensaje central.",
+    )
+    + B.tiles(
+        [
+            ("25 de 38", "piezas muestran el tiempo recuperado (la mezcla ronda 2 de cada 3)", "dato"),
+            ("13 de 38", "piezas siguen como consejo y cierran con un puente al servicio", "dato"),
+            ("15", "piezas ya programadas con sus medios: solo cambia el texto", "dato"),
+            ("23", "borradores: texto nuevo y, donde cambió la idea, escenas, guiones y prompts nuevos", "dato"),
+        ]
+    )
+    + callout(
+        "Nada en Metricool ha cambiado. Cuando apruebes cada pieza, se actualiza: las programadas se editan en su lugar (conservan hora y medios) y los borradores se reemplazan con el texto nuevo. Una pieza sin aprobar queda como está.",
+        "Aprobación.",
+    ),
+)
+kn += section(
     "Semanas 1 a 4: día por día (hora de Nueva York)",
     callout(
-        "Plan completo de 7 días: lunes Google, martes LinkedIn, miércoles Instagram y Facebook (carrusel), jueves LinkedIn, viernes Reel, sábado imagen única en Instagram y Facebook, domingo Instagram (carrusel). Plan mínimo: martes, miércoles y jueves. El Reel y la imagen única son formatos nuevos y se miden como hipótesis desde la revisión 1. A eso se suman dos TikToks por semana con presentadores IA a las 18:00 (martes y jueves; en la semana 3, martes y viernes). Además, dos videos de LinkedIn con presentador IA, los miércoles 25 de noviembre y 2 de diciembre a las 11:00.",
+        "Plan completo de 7 días: lunes Google, martes LinkedIn, miércoles Instagram y Facebook (carrusel), jueves LinkedIn, viernes Reel, sábado imagen única en Instagram y Facebook, domingo Instagram. A eso se suman dos TikToks por semana con presentadores IA a las 18:00 (martes y jueves; en la semana 3, martes y viernes) y dos videos de LinkedIn con presentador IA, los miércoles 25 de noviembre y 2 de diciembre a las 11:00. Las semanas 1 y 2 ya están programadas con sus medios; las semanas 3 y 4 son borradores.",
         "Ritmo.",
     )
     + week_block(
         1,
         [
-            row("Lun", 11, 9, "10:00", "Google: qué hace Klean N Green NYC", "Perfil de Empresa de Google, publicación con botón", "ref", "Borrador en Metricool (solo texto). La imagen y el botón se agregan en el editor."),
-            row("Mar", 11, 10, "11:00", "Checklist «Turnover week: 5 checks» para administradores", "LinkedIn", "ref", "Checklists y guías. Conjunto «LinkedIn, administración de propiedades»."),
+            krow("Lun", 11, 9, "10:00", "Google: ¿qué harías con tu sábado si la limpieza ya estuviera hecha?", "Perfil de Empresa de Google, publicación con botón", "TB"),
+            krow("Mar", 11, 10, "11:00", "Semana de rotación sin perseguir cuadrillas: los 5 chequeos", "LinkedIn", "TB"),
             tt("KN1"),
-            row("Mié", 11, 11, "12:00", "Carrusel: la cocina en 6 puntos que se pasan por alto", "Instagram y Facebook, carrusel", "ref", "Checklists y guías. Conjuntos «Instagram, hogares» y «Facebook»."),
-            row("Jue", 11, 12, "11:00", "Qué incluye la limpieza de oficinas", "LinkedIn", "ref", "Servicios explicados. Conjunto «LinkedIn, oficinas»."),
+            krow("Mié", 11, 11, "12:00", "Carrusel: la cocina en 6 puntos que se pasan por alto", "Instagram y Facebook, carrusel", "TIP", "El puente va en el texto; opcional: un noveno slide."),
+            krow("Jue", 11, 12, "11:00", "Qué incluye la limpieza de oficinas y qué libera", "LinkedIn", "TB"),
             tt("KN2"),
-            row("Vie", 11, 13, "12:00", "Reel: 3 limpiezas rápidas del baño", "Instagram y Facebook, Reel de unos 12 segundos", "hip", "Checklists y guías. Conjunto «Instagram, Reels»."),
-            row("Sáb", 11, 14, "11:00", "Imagen única: primera limpieza, los 4 datos que hay que enviar", "Instagram y Facebook, imagen única", "hip", "Servicios explicados. Conjunto «Instagram, sábados»."),
-            row("Dom", 11, 15, "18:00", "«Sunday reset»: 20 minutos, 6 puntos", "Instagram, carrusel", "hip", "Checklists y guías. Conjunto «Instagram, hogares»."),
+            krow("Vie", 11, 13, "12:00", "Reel: 3 limpiezas rápidas del baño", "Instagram y Facebook, Reel de unos 12 segundos", "TIP", "El puente va en el texto."),
+            krow("Sáb", 11, 14, "11:00", "Imagen única: cuatro datos y el resto del sábado es tuyo", "Instagram y Facebook, imagen única", "TB"),
+            krow("Dom", 11, 15, "18:00", "«Sunday reset»: el texto abre con el domingo que recuperas", "Instagram, carrusel", "TB", "Las imágenes no cambian; opcional: un noveno slide."),
         ],
     )
     + week_block(
         2,
         [
-            row("Lun", 11, 16, "10:00", "Google: limpiezas entre inquilinos o huéspedes", "Perfil de Empresa de Google, publicación con botón", "ref", "Borrador en Metricool (solo texto)."),
-            row("Mar", 11, 17, "11:00", "Cómo se verifica una unidad antes de entregarla, en 3 pasos", "LinkedIn", "ref", "Equipo y proceso. Conjunto «LinkedIn, administración de propiedades»."),
+            krow("Lun", 11, 16, "10:00", "Google: limpiezas entre inquilinos o huéspedes, con tiempo para mensajes y visitas", "Perfil de Empresa de Google, publicación con botón", "TB"),
+            krow("Mar", 11, 17, "11:00", "Verificación de una unidad: recibes fotos y visto bueno sin recorrerla", "LinkedIn", "TB"),
             tt("KN3"),
-            row("Mié", 11, 18, "12:00", "Carrusel: 20 minutos antes de recibir invitados", "Instagram y Facebook, carrusel", "ref", "Checklists y guías. Conjuntos «Instagram, hogares» y «Facebook»."),
-            row("Jue", 11, 19, "11:00", "Reseña de un cliente, con su autorización", "LinkedIn", "ref", "Reseñas. Conjunto «LinkedIn, administración de propiedades»."),
+            krow("Mié", 11, 18, "12:00", "Imagen única: invitados en camino y la casa ya está lista", "Instagram y Facebook, imagen única", "TB"),
+            krow("Jue", 11, 19, "11:00", "Reseña real de un cliente, palabra por palabra", "LinkedIn", "TB", "Solo cambia la línea que enmarca la reseña."),
             tt("KN4"),
-            row("Vie", 11, 20, "12:00", "Reel: rieles de ventanas, el punto que nadie limpia", "Instagram y Facebook, Reel de unos 12 segundos", "hip", "Checklists y guías. Conjunto «Instagram, Reels»."),
-            row("Sáb", 11, 21, "11:00", "Imagen única: ¿cada cuánto limpiar?", "Instagram y Facebook, imagen única", "hip", "Servicios explicados. Conjunto «Instagram, sábados»."),
-            row("Dom", 11, 22, "18:00", "Entrada y recibidor: la primera impresión en 5 puntos", "Instagram, carrusel", "hip", "Checklists y guías. Conjunto «Instagram, hogares»."),
+            krow("Vie", 11, 20, "12:00", "Reel: rieles de ventanas, el punto que nadie limpia", "Instagram y Facebook, Reel de unos 12 segundos", "TIP", "El puente va en el texto."),
+            krow("Sáb", 11, 21, "11:00", "Imagen única: ¿cada cuánto limpiar? Empieza por el fin de semana que quieres", "Instagram y Facebook, imagen única", "TB"),
+            krow("Dom", 11, 22, "18:00", "Entrada y recibidor: volver a casa con todo hecho", "Instagram, carrusel", "TB", "Las imágenes no cambian; opcional: un octavo slide."),
         ],
         "Revisión 1 el viernes 20 de noviembre: comparar los Reels del viernes con los carruseles del miércoles.",
     )
     + week_block(
         3,
         [
-            row("Lun", 11, 23, "10:00", "Google: limpieza de oficina antes de las fiestas", "Perfil de Empresa de Google, publicación con botón «Call now»", "ref", "Borrador en Metricool (solo texto)."),
-            row("Mar", 11, 24, "11:00", "Checklist de oficina antes del cierre de año", "LinkedIn", "ref", "Checklists y guías. Conjunto «LinkedIn, oficinas»."),
+            krow("Lun", 11, 23, "10:00", "Google: el equipo cierra el año, no la lista de limpieza", "Perfil de Empresa de Google, publicación con botón", "TB"),
+            krow("Mar", 11, 24, "11:00", "Checklist de oficina antes del cierre de año, con puente", "LinkedIn, carrusel en PDF", "TIP"),
             tt("KN5"),
             li("LI1"),
-            row("Mié", 11, 25, "12:00", "Carrusel: después de la cena, la cocina en 30 minutos", "Instagram y Facebook, carrusel", "ref", "Checklists y guías. Conjuntos «Instagram, hogares» y «Facebook»."),
-            row("Vie", 11, 27, "12:00", "Reel: la habitación de huéspedes en 3 pasos", "Instagram y Facebook, Reel de unos 12 segundos", "hip", "Checklists y guías. Conjunto «Instagram, Reels»."),
+            krow("Mié", 11, 25, "12:00", "Carrusel: después de la cena, la cocina en 30 minutos", "Instagram y Facebook, carrusel", "TIP"),
+            krow("Jue", 11, 26, "11:00", "Thanksgiving: agradecimiento breve, un día sin nada más en la lista", "LinkedIn y Facebook", "TB"),
+            krow("Vie", 11, 27, "12:00", "Reel: se van los invitados y la tarde es tuya", "Instagram y Facebook, Reel de unos 12 segundos", "TB"),
             tt("KN6"),
-            row("Sáb", 11, 28, "11:00", "Imagen única: ¿invitados en diciembre?", "Instagram y Facebook, imagen única", "hip", "Servicios explicados. Conjunto «Instagram, sábados»."),
-            row("Dom", 11, 29, "18:00", "«Sunday reset» después del fin de semana largo", "Instagram, carrusel", "hip", "Checklists y guías. Conjunto «Instagram, hogares»."),
+            krow("Sáb", 11, 28, "11:00", "Imagen única: ¿invitados en diciembre? La visita, no la preparación", "Instagram y Facebook, imagen única", "TB"),
+            krow("Dom", 11, 29, "18:00", "Imagen única: el domingo después del fin de semana largo es tuyo", "Instagram, imagen única", "TB"),
         ],
-        "Semana sin jueves: el 26 es Thanksgiving y no se publica. El viernes 27 vuelve el ritmo con el Reel.",
+        "El jueves 26 es Thanksgiving: sale solo el agradecimiento breve en LinkedIn y Facebook, sin TikTok. El viernes 27 vuelve el ritmo con el Reel.",
     )
     + week_block(
         4,
         [
-            row("Lun", 11, 30, "10:00", "Google: limpieza recurrente del hogar", "Perfil de Empresa de Google, publicación con botón", "ref", "Borrador en Metricool (solo texto)."),
-            row("Mar", 12, 1, "11:00", "Administradores: calendario de limpieza para el cierre de año", "LinkedIn", "ref", "Servicios explicados. Conjunto «LinkedIn, administración de propiedades»."),
+            krow("Lun", 11, 30, "10:00", "Google: limpieza recurrente del hogar, fines de semana que se pueden planear", "Perfil de Empresa de Google, publicación con botón", "TB"),
+            krow("Mar", 12, 1, "11:00", "Administradores: calendario de cierre de año con la limpieza fuera de su lista", "LinkedIn", "TB"),
             tt("KN7"),
             li("LI2"),
-            row("Mié", 12, 2, "12:00", "Antes y después de un trabajo real, con autorización", "Instagram y Facebook, carrusel de 2 a 4 imágenes", "ref", "Antes y después. Conjuntos «Instagram, hogares» y «Facebook»."),
-            row("Jue", 12, 3, "11:00", "Qué incluye la limpieza para administración de propiedades", "LinkedIn", "ref", "Servicios explicados. Conjunto «LinkedIn, administración de propiedades»."),
+            krow("Mié", 12, 2, "12:00", "Antes y después de un trabajo real: nuestro tiempo en el sitio, el tuyo intacto", "Instagram y Facebook, carrusel de 6 imágenes", "TB", "Requiere fotos reales y autorización del cliente."),
+            krow("Jue", 12, 3, "11:00", "Qué incluye la limpieza para administración de propiedades y qué devuelve", "LinkedIn, carrusel en PDF", "TB"),
             tt("KN8"),
-            row("Vie", 12, 4, "12:00", "Reel: los puntos que todos tocan, antes de las visitas", "Instagram y Facebook, Reel de unos 12 segundos", "hip", "Checklists y guías. Conjunto «Instagram, Reels»."),
-            row("Sáb", 12, 5, "11:00", "Imagen única: ¿empezar enero con la casa limpia?", "Instagram y Facebook, imagen única", "hip", "Servicios explicados. Conjunto «Instagram, sábados»."),
-            row("Dom", 12, 6, "18:00", "Entrada en invierno: sal, humedad y alfombras", "Instagram, carrusel", "hip", "Checklists y guías. Conjunto «Instagram, hogares»."),
+            krow("Vie", 12, 4, "12:00", "Reel: los puntos que todos tocan, antes de las visitas, con puente", "Instagram y Facebook, Reel de unos 12 segundos", "TIP"),
+            krow("Sáb", 12, 5, "11:00", "Imagen única: los fines de semana de enero que querías", "Instagram y Facebook, imagen única", "TB"),
+            krow("Dom", 12, 6, "18:00", "Reel: la entrada en invierno ya resuelta y la noche tuya", "Instagram, Reel de unos 12 segundos", "TB"),
         ],
         "Revisión 2 el viernes 4 de diciembre. Con sus resultados se detallan las semanas 5 a 8.",
     ),
@@ -496,7 +540,7 @@ rs += section(
     "<li><b>Capacidad del equipo.</b> Si se cumple menos del 80% de lo programado dos semanas seguidas, volver al plan mínimo.</li></ul>",
 )
 dates = [
-    ("Jue 26 nov", "Thanksgiving", "Todas", "K&G Market con horario especial. Klean N Green NYC y JDET Capital sin publicación ese día."),
+    ("Jue 26 nov", "Thanksgiving", "Todas", "K&G Market con horario especial. Klean N Green NYC solo publica un agradecimiento breve en LinkedIn y Facebook; JDET Capital no publica ese día."),
     ("Vie 27 y sáb 28 nov", "Black Friday y Small Business Saturday", "K&G Market", "Publicación e historias de comercio local."),
     ("Mar 8 dic", "Inmaculada Concepción (feriado en Perú)", "Klean N Green Perú", "No cae en día de publicación."),
     ("Jue 24 y vie 25 dic", "Nochebuena y Navidad", "Todas", "Saludo en historias. Sin publicación fija el 25."),

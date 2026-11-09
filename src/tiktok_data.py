@@ -207,6 +207,12 @@ add("KN8", "kn", "2026-12-03", "Four spots to clean once a month",
     "#NYCCleaning #CleaningTips #ApartmentCleaning")
 
 
+import sys as _sys
+import kn_timeback as _KT
+
+_KT.apply_tiktok(_sys.modules[__name__])
+
+
 def spoken(p):
     return " ".join(p["beats"])
 

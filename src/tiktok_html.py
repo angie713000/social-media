@@ -34,6 +34,24 @@ def week_of(p):
     return (_date(p) - dt.date(2026, 11, 9)).days // 7 + 1
 
 
+def tchip(p):
+    if not p.get("type"):
+        return ""
+    return chipx(p["type"], "dato" if p["type"] == "Time back" else "ref") + " "
+
+
+def vchip(p):
+    """Media status plus the proposal status (only Klean N Green NYC pieces carry a proposal)."""
+    if p.get("chip") == "Scheduled · caption change proposed":
+        return chipx(p["chip"], "hip")
+    base = chipx("Draft · add video", "hip")
+    return base + (" " + chipx(p["chip"], "hip") if p.get("chip") else "")
+
+
+def angle(p):
+    return f'<p class="angle"><b>Angle:</b> {e(p["angle"])}</p>' if p.get("angle") else ""
+
+
 def piece(p):
     day, hour = dlabel(p), "6 PM"
     spoken_lines = "\n".join(p["beats"])
@@ -43,10 +61,13 @@ def piece(p):
         f"**Setting:** {p['setting']}.",
         f"**Length:** about 18 seconds, vertical 9:16, 1080 x 1920 px. Spoken script of {len(T.spoken(p).split())} words.",
     ])
-    status = meta_box([
-        f"Draft saved in Metricool for {NAME[p['brand']]} on TikTok ({T.HANDLE[p['brand']]}), {day} at 6 PM New York time. It holds a placeholder photo, so TikTok treats it as a photo post until you replace it.",
-        "In the editor: remove the photo, upload the video and switch on the AI-generated content label. Nothing is published.",
-    ])
+    if p.get("status_lines"):
+        status = meta_box(p["status_lines"])
+    else:
+        status = meta_box([
+            f"Draft saved in Metricool for {NAME[p['brand']]} on TikTok ({T.HANDLE[p['brand']]}), {day} at 6 PM New York time. It holds a placeholder photo, so TikTok treats it as a photo post until you replace it.",
+            "In the editor: remove the photo, upload the video and switch on the AI-generated content label. Nothing is published.",
+        ] + (["If the video for this day is already made, keep it and only change the caption."] if p.get("type") else []))
     body = (
         det("Script, on-screen text and video prompt", (
             B.copybox("Spoken script (3 beats)", spoken_lines)
@@ -62,15 +83,15 @@ def piece(p):
         '<div class="slot"><div class="when">'
         f"<b>{e(day)}</b><span>{e(hour)}</span></div>"
         f'<div class="what"><p class="what-t">TikTok: {e(p["title"])}</p>'
-        f'<p class="what-m">TikTok {e(T.HANDLE[p["brand"]])} · AI presenter video, about 18 s {chipx("Draft · add video", "hip")}</p></div></div>'
-        f"{body}</article>"
+        f'<p class="what-m">TikTok {e(T.HANDLE[p["brand"]])} · AI presenter video, about 18 s {tchip(p)}{vchip(p)}</p></div></div>'
+        f"{angle(p)}{body}</article>"
     )
 
 
 def board_row(p):
     return (
         f"<tr><th scope='row'>{e(dlabel(p))} · 6 PM</th><td>TikTok</td>"
-        f"<td>{e(p['title'])}</td><td>{chipx('Draft · add video', 'hip')}</td></tr>"
+        f"<td>{e(p['title'])}</td><td>{tchip(p)}{p.get('chip') and chipx(p['chip'], 'hip') or chipx('Draft · add video', 'hip')}</td></tr>"
     )
 
 
@@ -80,7 +101,7 @@ def overview_sections(brand):
     topics = (
         "product and produce tips: how to choose, how to use, what to cook"
         if brand == "kg" else
-        "practical cleaning tips: myths, order of work, safety and what to ask a provider"
+        "the time you get back (what would you do with your Saturday, what to ask a provider) and practical cleaning tips that end with a bridge to the service"
     )
     rs = B.section(
         "TikTok with AI presenters",
@@ -90,7 +111,7 @@ def overview_sections(brand):
         )
         + B.tiles([
             ("8", f"TikToks for {name}, each with its own presenter, script, video prompt and caption", "dato"),
-            ("8", "drafts saved in Metricool, with a placeholder photo until you add the video", "dato"),
+            ("8" if brand == "kg" else "7", "drafts saved in Metricool, with a placeholder photo until you add the video" if brand == "kg" else "drafts saved in Metricool, with a placeholder photo until you add the video (the Nov 10 TikTok is scheduled with its video)", "dato"),
             ("18 s", "about, per video: 3 beats of 35 to 47 words", "dato"),
         ]),
         "Posting times come from Metricool's general TikTok reference, because the account is new and has no history yet.",
