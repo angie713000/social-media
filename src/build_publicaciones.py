@@ -11,6 +11,7 @@ import contextlib
 
 with contextlib.redirect_stdout(io.StringIO()):
     import build_estrategia as B
+import characters as CH
 
 OUT = "klean-nyc-publicaciones-sem1-4.html"
 e, fmt = B.e, B.fmt
@@ -223,6 +224,17 @@ HANDS = {
 }
 
 
+# Carousels of the draft weeks use the hands of a recurring character, so the set matches the videos and single images.
+HANDS_CHAR = {
+    "After dinner: the kitchen in 30 minutes": ("maya", "2026-11-25", "Instagram carousel"),
+    "Office checklist before the holidays": ("daniel", "2026-11-24", "LinkedIn carousel"),
+    "What property management cleaning includes": ("daniel", "2026-12-03", "LinkedIn carousel"),
+}
+for _t, (_k, _d, _f) in HANDS_CHAR.items():
+    HANDS[_t] = CH.hands_text(_k)
+    CH.use(_k, _d, _f, _t)
+
+
 def slide_prompt(title, i, n, head, body, scene, handle="@kleanngreen"):
     role = "cover slide" if i == 1 else ("closing slide" if i == n else "content slide")
     s = style() + f" This is the {role} of a carousel titled \"{title}\". "
@@ -241,6 +253,10 @@ def slide_prompt(title, i, n, head, body, scene, handle="@kleanngreen"):
     s += f"Photo scene: {scene}. "
     if title in HANDS:
         s += f"If hands appear in the photo, they are {HANDS[title]}, the same on every slide of this set. "
+    if title in HANDS_CHAR and "Maya" in scene:
+        k = HANDS_CHAR[title][0]
+        s += (f"This is the one slide of the set where a face appears, and the rule above about faces does not apply to {CH.name(k)}: {CH.identity(k)}. "
+              + CH.ref_sentence(k) + " Candid, relaxed, not looking at the camera, natural hands with five fingers. ")
     s += NO_NUM
     if i == n:
         s += f" Also write \"{handle}\" in small Jost text at the bottom right."
@@ -289,7 +305,7 @@ CAR["11-25"] = ("After dinner: the kitchen in 30 minutes", [
     ("3. Dishes, 10 min", "Load the dishwasher and hand-wash the rest.", "an open dishwasher being loaded with plates, a dish rack beside it"),
     ("4. Counters and stovetop, 8 min", "Wipe from top to bottom.", "a hand wiping a stovetop and counter with a cloth"),
     ("5. Floor and trash, 5 min", "Sweep the crumbs. Take out the trash.", "a broom sweeping crumbs on a kitchen floor next to a tied trash bag"),
-    ("Save this for Thursday night", "", "a clean kitchen at night with soft warm lights and empty counters"),
+    ("Save this for Thursday night", "", "a clean kitchen at night with soft warm lights and empty counters; in the background Maya sits relaxed at the dining table with a mug of tea in both hands, looking out of the frame, the work already done"),
 ])
 
 
@@ -660,6 +676,23 @@ SD_CONSTRAINTS = (
     "Constraints: only hands appear, no faces; no text, captions, subtitles or watermarks; no logos, no readable brand names or product labels; "
     "no cartoon, illustration or 3D-render look; natural, physically plausible hand and object movement; no cuts inside the scene."
 )
+SD_CONSTRAINTS_CHAR = (
+    "Constraints: the only person is the recurring character named in the continuity block, a fictional AI character who does not speak and looks at the camera only for a moment; no other people; "
+    "no text, captions, subtitles or watermarks; no logos, no readable brand names or product labels; "
+    "no cartoon, illustration or 3D-render look; natural, physically plausible face, hand and object movement; no cuts inside the scene."
+)
+REEL_DATE = {"11-27": "2026-11-27", "12-04": "2026-12-04", "12-06": "2026-12-06"}
+REEL_CHAR = {}  # reel key (here "11-27"; K&G uses "kg-11-11") -> character key
+
+
+def anchor_char(k, place_and_props):
+    x = CH.c(k)
+    return (
+        f"{place_and_props} The person is {CH.identity(k)}, with the same face, hair and clothes in every scene where the face shows. {CH.ref_sentence(k)} "
+        f"In close-ups only {CH.pron(k, 'pos')} hands show: {x['hands']}."
+    )
+
+
 SD_SETTINGS = [
     "Aspect ratio 9:16 (vertical), the highest resolution the tool offers (1080 x 1920 px or above).",
     f"{SD_SECS} seconds per scene, 3 scenes, about 12 seconds in total. Use 5 seconds per scene if you want more room to trim when editing.",
@@ -667,10 +700,11 @@ SD_SETTINGS = [
     "Paste the continuity block at the start of every scene prompt, so location, light, props and the hand stay the same from scene to scene.",
     "Generate and judge one scene at a time. If the tool offers it, use the last frame of the previous scene as the reference for the next one.",
     "Change one line at a time: if the movement is right but the framing is off, edit only the Camera line; if the framing is right but the movement is off, edit only Subject and action.",
+    "Reels with Maya or Daniel (Nov 27, Dec 4 and Dec 6) use a constraints line that allows that one character and nobody else; attach the character's reference portrait to every scene prompt. The Reels of weeks 1 and 2 are already finished and stay hands-only.",
 ]
 
 
-def seedance_scene(title, i, n, anchor, action, camera, sound):
+def seedance_scene(title, i, n, anchor, action, camera, sound, cons=None):
     return (
         f"Scene {i} of {n} of a vertical Reel titled \"{title}\". 9:16, {SD_SECS} seconds, one continuous shot.\n"
         f"Continuity: {anchor}\n"
@@ -678,20 +712,20 @@ def seedance_scene(title, i, n, anchor, action, camera, sound):
         f"Camera: {camera}\n"
         f"Style: {SD_STYLE}.\n"
         f"Sound: {sound}\n"
-        + SD_CONSTRAINTS
+        + (cons or SD_CONSTRAINTS)
     )
 
 
-def seedance_combo(title, anchor, scenes):
+def seedance_combo(title, anchor, scenes, cons=None, through="the same hand is the through-line"):
     n = len(scenes)
     parts = [
-        f"Vertical 9:16 Reel titled \"{title}\", {n * SD_SECS} seconds, a {n}-shot sequence with clean cuts between shots; the same hand is the through-line.",
+        f"Vertical 9:16 Reel titled \"{title}\", {n * SD_SECS} seconds, a {n}-shot sequence with clean cuts between shots; {through}.",
         f"Continuity: {anchor}",
     ]
     for i, (action, camera, sound) in enumerate(scenes, 1):
         parts.append(f"Shot {i} ({SD_SECS} s): {action} Camera: {camera} Sound: {sound}")
     parts.append(f"Style: {SD_STYLE}.")
-    parts.append(SD_CONSTRAINTS)
+    parts.append(cons or SD_CONSTRAINTS)
     return "\n".join(parts)
 
 
@@ -731,17 +765,21 @@ CAST = {
               "A South Asian woman in her mid-twenties in a cream sweater"),
     "11-21": ("The person: a Latino man in his mid-thirties with short dark wavy hair and light stubble, wearing a gray hoodie with the sleeves pushed up and holding a leaf-green mug." + PERSON_RULES,
               "A Latino man in his mid-thirties in a gray hoodie"),
-    "11-28": ("The person: a white woman in her late sixties with short silver hair and blue eyes, wearing a light blue button-up shirt with the sleeves rolled up; a small green plant on the nightstand is the green accent." + PERSON_RULES,
-              "A white woman in her late sixties in a light blue shirt"),
-    "11-29": ("The person: an East Asian man in his early forties with short black hair and black-framed glasses, wearing a navy t-shirt and gray sweatpants; a green plant on the shelves in the background is the green accent." + PERSON_RULES,
-              "An East Asian man in his early forties in a navy t-shirt"),
-    "12-05": ("The person: a Middle Eastern woman in her early fifties with wavy dark brown hair with a few gray strands, wearing a cream cable-knit sweater and holding a leaf-green mug." + PERSON_RULES,
-              "A Middle Eastern woman in her early fifties in a cream sweater"),
+    "11-28": (CH.block_scene("maya", "a small green plant on the nightstand is the green accent"), CH.alt_person("maya")),
+    "11-29": (CH.block_scene("daniel", "a green plant on the shelves in the background is the green accent"), CH.alt_person("daniel")),
+    "12-05": (CH.block_scene("maya", "a leaf-green mug in hand is the green accent"), CH.alt_person("maya")),
 }
 
 
-def single_photo_prompt(scene, person=None):
-    if person:
+CAST_CHAR = {"11-28": "maya", "11-29": "daniel", "12-05": "maya"}
+SING_DATE = {"11-28": "2026-11-28", "11-29": "2026-11-29", "12-05": "2026-12-05"}
+
+
+def single_photo_prompt(scene, person=None, char=None):
+    if person and char:
+        lead = f" Characters. {CH.name(char)} is a recurring character of the brand and Clover, the cat, is the same in every image of the set. "
+        chars = person + " " + CHAR_CAT
+    elif person:
         lead = " Characters. The person is specific to this image and does not recur; Clover, the cat, is the same in every image of the set. "
         chars = person + " " + CHAR_CAT
     else:
@@ -955,6 +993,7 @@ def vo_boxes(key):
         "Generate the three lines as one take so the tone stays continuous, then cut it to the scenes in the video editor.",
         "If a line does not land, change the tag instead of rewriting the words: [warmly], [excited], [curious], [softly], [chuckles], [short pause]. Capitals mark emphasis, and \"...\" a longer beat.",
         "Voice matters as much as the text: pick a warm, natural American voice before iterating. Keep the phone number and web address out of the voiceover.",
+        *([f"This Reel uses **{CH.name(REEL_CHAR[key])}'s voice**: create it once with the voice description in the Characters section of the Overview and reuse it for every voiceover and lip sync of {CH.name(REEL_CHAR[key])}."] if key in REEL_CHAR else []),
     ])
     return (
         notes
@@ -969,8 +1008,12 @@ def reel_piece(key, day, hour):
     title, clips, ig, fb = REEL[key]
     anchor, scenes = SEED[key]
     n = len(scenes)
+    ch = REEL_CHAR.get(key)
+    cons = SD_CONSTRAINTS_CHAR if ch else None
+    if ch:
+        CH.use(ch, REEL_DATE[key], "Reel", title)
     boxes = "".join(
-        B.copybox(f"Scene {i} of {n}: {ov}", seedance_scene(title, i, n, anchor, a, c, snd))
+        B.copybox(f"Scene {i} of {n}: {ov}", seedance_scene(title, i, n, anchor, a, c, snd, cons))
         for i, ((a, c, snd), (ov, _sc)) in enumerate(zip(scenes, clips), 1)
     )
     overlay = "\n".join(f"Scene {i}: {ov}" for i, (ov, _sc) in enumerate(clips, 1))
@@ -983,6 +1026,7 @@ def reel_piece(key, day, hour):
     needs = meta_box([
         f"Vertical 9:16, 1080 x 1920 px. {n} scenes of {SD_SECS} seconds each, about {n * SD_SECS} seconds in total.",
         "Add the on-screen text, the voiceover (script below) and licensed music in the video editor: generators garble text inside video.",
+        *([f"**{CH.name(ch)}** is the person in this Reel (the face shows in some scenes, only the hands in the close-ups). Attach {CH.name(ch)}'s reference portrait to every scene prompt. {CH.ai_video_note([ch], True)}"] if ch else []),
         "Cover: use a frame from scene 1 and add the title in Canva, in Cormorant Garamond bold on the off-white #F7F6F1.",
         "The settings and the way the prompts are built are explained in the Overview, under \"Video prompts for Seedance\".",
     ])
@@ -991,7 +1035,7 @@ def reel_piece(key, day, hour):
         + det("What the video needs", needs, False)
         + det("Continuity block: paste it at the start of every scene", B.copybox("Continuity block", anchor[0].upper() + anchor[1:]), False)
         + det(f"Seedance prompts: {n} scenes, one prompt per scene", boxes, False)
-        + det("All scenes in one prompt (optional)", B.copybox("Single prompt with three labeled shots", seedance_combo(title, anchor, scenes)), False)
+        + det("All scenes in one prompt (optional)", B.copybox("Single prompt with three labeled shots", seedance_combo(title, anchor, scenes, cons, f"{CH.name(ch)} is the through-line" if ch else "the same hand is the through-line")), False)
         + det("On-screen text by scene", B.copybox("On-screen text (add in the video editor)", overlay), False)
         + det("Voiceover script (audio)", vo_boxes(key), False)
         + det("Instagram text", B.copybox("Instagram text", ig), True)
@@ -1026,15 +1070,24 @@ def thanks_piece(day, hour):
 
 def single_piece(key, day, hour):
     head, scene, alt, ig, fb = SING[key]
+    ch = CAST_CHAR.get(key)
+    if ch:
+        CH.use(ch, SING_DATE[key], "Single image", head)
+        who = [
+            f"**{CH.name(ch)}** is the person in this image, with Clover, the cat. The prompt already includes both descriptions. Attach the {CH.name(ch)} portrait from the Characters section of the Overview and the Clover reference image (section \"Maya, Daniel and Clover in single images\") to the prompt, so both look the same each time.",
+            CH.tag_ai_note([ch]),
+        ]
+    else:
+        who = [f"{CHAR_NAME} (a gray tabby cat) is the only recurring character. The person is different in every image, on purpose. In this one: {CAST[key][1]}. The prompt already includes both descriptions. Attach the Clover reference image from the Overview (section \"Maya, Daniel and Clover in single images\") to every prompt so the cat looks the same each time."]
     needs = meta_box([
         "4:5 format, 1080 x 1350 px, one image with no text on it: the caption carries the message.",
-        f"{CHAR_NAME} (a gray tabby cat) is the only recurring character. The person is different in every image, on purpose. In this one: {CAST[key][1]}. The prompt already includes both descriptions. Attach the Clover reference image from the Overview (section \"Clover and a varied cast for single images\") to every prompt so the cat looks the same each time.",
+        *who,
         "Leave the bottom-left corner empty: the logo is added afterward.",
     ])
     alt_box = meta_box(["Paste this in the image's alt text field when you add the image in Metricool. It describes the photo, since the image has no text."]) + B.copybox("Alt text", alt)
     body = (
         det("What the image needs", needs, False)
-        + det("Image: prompt", B.copybox("Image prompt (complete, paste into the generator)", single_photo_prompt(scene, CAST[key][0])), False)
+        + det("Image: prompt", B.copybox("Image prompt (complete, paste into the generator)", single_photo_prompt(scene, CAST[key][0], ch)), False)
         + det("Alt text", alt_box, False)
         + det("Instagram text", B.copybox("Instagram text", ig), True)
         + (det("Facebook text", B.copybox("Facebook text", fb), False) if fb else "")
@@ -1175,7 +1228,7 @@ confirm = [
     "**Typography roles.** The website lists Jost and Cormorant Garamond without saying which is which. The prompts use Cormorant Garamond for headlines and Jost for body text and labels; tell me if it is the other way round and I will swap them.",
     "**Google buttons in Metricool.** Nov 9 and Nov 16 are scheduled with their images; Nov 23 and Nov 30 are text-only drafts. Metricool has no button field for Google, so the link sits in the text; the button (Book or Learn more) is only set if you publish directly in Google.",
     "**Phone number.** No post text includes it, because Google can reject posts with a phone number in the text. The website footer shows (347) 833-4766 and the closing-slide design shows (347) 883-4766: confirm which one is correct before publishing.",
-    "**People in the images.** The people in the single images, and the hands in the carousels and Reels, are fictional and AI-generated, and they change from post to post in age, background and look on purpose. Clover (a gray tabby cat) is the only recurring character. The captions do not mention any of them. If you prefer real team members, tell me and the prompts are updated.",
+    "**People in the images.** Maya and Daniel are the two recurring AI characters of the brand; Clover (a gray tabby cat) is the recurring animal. They appear in the draft pieces from Nov 12 on: TikToks, LinkedIn videos, the Reels of Nov 27, Dec 4 and Dec 6, the single images of Nov 28, Nov 29 and Dec 5, and as hands in three carousels. The finished images and videos of weeks 1 and 2, and the Nov 10 TikTok, keep the one-off people they already have. The captions never mention the characters or speak in their name. If you prefer real team members, tell me and the prompts are updated.",
     "**LinkedIn carousels.** Nov 24 and Dec 3 are text drafts that already have the PDF carousel option on. They need their images before they can go out; if the images are not ready in time, remove the \"Swipe through.\" sentence and publish them as text. Nov 17 is not a carousel: it is already scheduled with its image.",
     "**LinkedIn links.** Each post that links to the website now points to the page that matches its topic (checklist, testimonials, commercial, Brooklyn); only Nov 10 still links to Contact. Every link keeps its UTM tag and is shortened by Metricool.",
 ]
@@ -1205,7 +1258,7 @@ STRAT = B.section(
             "**No hours-saved numbers.** The numbers that remain (5 checks, 20 minutes, 30 minutes) are steps inside tips, not promises.",
             "**Tips stay, with a bridge.** One piece in three is a tip. It ends with one bridge line from the bank below.",
             "**One call to action per piece:** a free estimate, a message or a scope.",
-            "**Scenes show the free time, not the work.** People and Clover appear after the work is done: reading, a mug at the window, waiting for guests.",
+            "**Scenes show the free time, not the work.** Maya, Daniel and Clover appear after the work is done: reading, a mug at the window, waiting for guests.",
             "**Weeks 1 and 2 keep their media.** Those posts are scheduled with finished images and videos, so the proposal changes only the text. Tip carousels and Reels carry the bridge in the caption, and three carousels have an optional extra closing slide.",
         ]
     ) + "</ul>"
@@ -1302,14 +1355,14 @@ DUO_IDEAS = [
     ("Wed, Nov 18", "Guests in 20 minutes", "11-18", "She sets a fresh towel in the entry; Clover waits at the door under a clock."),
     ("Sat, Nov 21", "How often to clean", "11-21", "He studies a blank calendar over coffee; Clover sleeps nearby."),
     ("Thu, Nov 26", "Thanksgiving thank-you (optional image)", None, "Clover only, on the rug near the set table."),
-    ("Sat, Nov 28", "Guests in December", "11-28", "She sits on the made guest bed with a mug; Clover waits beside a suitcase."),
-    ("Sun, Nov 29", "The Sunday after the long weekend", "11-29", "He reads on the sofa; Clover curls up at the other end."),
-    ("Sat, Dec 5", "January clean", "12-05", "She stands at the window with a coffee; Clover sits on the sill, looking at the winter light."),
+    ("Sat, Nov 28", "Guests in December", "11-28", "Maya sits on the made guest bed with a mug; Clover waits beside a suitcase."),
+    ("Sun, Nov 29", "The Sunday after the long weekend", "11-29", "Daniel reads on the sofa; Clover curls up at the other end."),
+    ("Sat, Dec 5", "January clean", "12-05", "Maya stands at the window with a coffee; Clover sits on the sill, looking at the winter light."),
 ]
 duo_table = (
     '<div class="tablewrap"><table class="rev"><thead><tr><th>Date</th><th>Post</th><th>Person</th><th>What happens in the photo</th></tr></thead><tbody>'
     + "".join(
-        f"<tr><th scope='row'>{e(a)}</th><td>{e(b)}</td><td>{e(CAST[k][1] if k else 'None (Clover only)')}</td><td>{e(c)}</td></tr>"
+        f"<tr><th scope='row'>{e(a)}</th><td>{e(b)}</td><td>{e((CH.name(CAST_CHAR[k]) + ': ' if k in CAST_CHAR else '') + CAST[k][1] if k else 'None (Clover only)')}</td><td>{e(c)}</td></tr>"
         for a, b, k, c in DUO_IDEAS
     )
     + "</tbody></table></div>"
@@ -1320,8 +1373,8 @@ REF_PROMPT = (
     + CHAR_CAT + " No text, no logos, no people and no other animals."
 )
 rs += B.section(
-    "Clover and a varied cast for single images",
-    B.callout("Single images carry no text: the caption says the message and the image is a photo. Clover, a gray tabby cat with a leaf-green collar, is the one recurring character; the people change from post to post in age, background and look, so the feed reflects the people who live in New York. Each prompt describes its own person, so no reference image is needed for the people. Generators also tend to garble text inside images, so removing it avoids the most common failure.", "The idea.")
+    "Maya, Daniel and Clover in single images",
+    B.callout("Single images carry no text: the caption says the message and the image is a photo. Clover, a gray tabby cat with a leaf-green collar, is the recurring animal. From Nov 28 the person in each image is one of the two recurring characters, Maya or Daniel, so the feed is recognizable; their reference portraits and descriptions are in the Characters section above. The finished images of weeks 1 and 2 are already scheduled with one-off people and stay as they are. Generators also tend to garble text inside images, so removing it avoids the most common failure.", "The idea.")
     + duo_table
     + B.copybox("Step 1: Clover reference image (generate it first and attach it to every single-image prompt)", REF_PROMPT)
     + B.copybox("Character block for Clover (already included in every single-image prompt)", CHAR_CAT)
@@ -1329,17 +1382,17 @@ rs += B.section(
     + "".join(
         f"<li>{fmt(x)}</li>"
         for x in [
-            "**Variety on purpose.** The six people differ in age (mid-twenties to late sixties), gender and background, and they are residents in their own homes. For a new single image, choose someone who is not yet in the table.",
-            "**Hands vary too.** In carousels and Reels only hands appear. Each set uses a different skin tone and age, and the same hands stay through the whole set.",
-            "**Same chat for the cat.** Attach the Clover reference image to each prompt and check the markings and the collar before using each result. For the person, check the face, the hands (five fingers) and the clothes described in the prompt.",
-            "**The people are fictional and AI-generated.** Do not present them as real employees, customers or testimonials, and do not write captions as if they were on the team. The Instagram drafts are already marked as AI-generated.",
+            "**Two people, one cat.** Each prompt carries the fixed description of Maya or Daniel and the block for Clover. Attach both reference images to the prompt: the person's portrait and the cat.",
+            "**Hands match the character.** In the three carousels of the draft weeks, the hands are Maya's or Daniel's; elsewhere the hands stay varied. The same hands stay through a whole set.",
+            "**Check each result.** Compare the person with the portrait (face, hair, age, clothes) and the cat with the reference (markings and collar). Check that the hands have five fingers.",
+            "**The characters are fictional and AI-generated.** Do not present them as real employees, customers or testimonials, and do not write captions as if they were on the team. The Instagram drafts are already marked as AI-generated.",
             "**No claims.** Captions and images do not say anything about pets or pet-safe products unless the business confirms it first.",
             "**Clover stays out of the way of the work.** Never on food, dishes, a sink or fresh linens; that is written into its block.",
             "**Real people instead?** Use a photo of that person as the reference image, with their written permission, and replace the person block in that prompt. Real photos of the team and of jobs are always better than generated ones for Google and for the Dec 2 before and after.",
         ]
     )
     + "</ul>",
-    "Applies to the single images: the Saturday posts, Wed Nov 18 and Sun Nov 29, each with a different person and Clover, and the optional Thanksgiving image, with Clover only. Carousels and Reels keep their layout and vary only the hands; LinkedIn images with no people stay as they are.",
+    "Applies to the single images: the Saturday posts and the Sunday post of the draft weeks, each with Maya or Daniel and Clover, and the optional Thanksgiving image, with Clover only. Carousels and Reels keep their layout; LinkedIn images with no people stay as they are.",
 )
 rs += B.section(
     "Video prompts for Seedance",
@@ -1358,12 +1411,12 @@ rs += B.section(
         f"<li>{fmt(x)}</li>"
         for x in [
             "**One prompt generates one image.** Each carousel has one prompt per slide, and each already carries the brand block (palette, typography and layout rules) and the exact text. Copy and paste one at a time.",
-            "**Single images: one prompt, one finished image, no text on it.** Each prompt includes the description of that image's person and of Clover, the recurring cat; attach the Clover reference image to every prompt so the cat stays the same (see \"Clover and a varied cast for single images\").",
+            "**Single images: one prompt, one finished image, no text on it.** Each prompt includes the description of that image's person (Maya or Daniel from Nov 28) and of Clover, the recurring cat; attach the person's portrait and the Clover reference image to every prompt so both stay the same (see \"Maya, Daniel and Clover in single images\").",
             "**No slide numbers on the images.** The prompts name the role of the slide (cover, content, closing) and tell the generator not to print counters, arrows or dots. The \"Slide 3 of 7\" labels in this pack are only for finding the prompt.",
             "**All slides of a carousel in the same chat**, so light, panel and color grading stay identical from one slide to the next.",
             "**Check the spelling of the text in every image.** If it comes out wrong, ask for another version, or keep only the photo: copy the sentence that follows \"Photo scene:\" in the prompt, generate the photo without text and set the text in Canva with Cormorant Garamond for the headline and Jost for the body, using the brand block in the Overview.",
             "**The logo is added afterward.** Every prompt leaves a 160 x 160 px square empty at the bottom left, because generators do not reproduce a logo well.",
-            "**Reels: one scene per prompt, for Seedance.** Generate each 4-second scene separately with the continuity block, join them in a video editor and add on-screen text and music there. The \"Video prompts for Seedance\" section explains the settings.",
+            "**Reels: one scene per prompt, for Seedance.** Generate each 4-second scene separately with the continuity block, join them in a video editor and add on-screen text and music there. The Reels of Nov 27, Dec 4 and Dec 6 show Maya or Daniel: attach the portrait to every scene. The \"Video prompts for Seedance\" section explains the settings.",
             "**Linked pages.** Pieces with a link include the prompt for that page's featured image. Generate each page image once, upload it to the page and check the link preview before the piece goes out.",
             "**The prompts ask for photorealistic images.** They are generic illustrative photos, not Klean's real work: do not present them as real jobs. Flag them as AI-generated so that option is set on Instagram when the drafts are created.",
         ]

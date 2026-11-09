@@ -81,6 +81,7 @@ section, callout, tagbox, kpis = B.section, B.callout, B.tagbox, B.kpis
 import sys as _sys
 _sys.path.insert(0, ".")
 import tiktok_data as T
+import characters as CH
 
 TT_EN = {
     "KG1": "Ají amarillo: the yellow pepper behind Peruvian flavor",
@@ -107,7 +108,7 @@ def tt(pid):
     y, m, d = (int(v) for v in p["date"].split("-"))
     wd = DAYS[dt.date(y, m, d).weekday()]
     return row(wd, m, d, "18:00", f"TikTok: {TT_EN[pid]}",
-               f"TikTok ({T.HANDLE[p['brand']]}), video of about 18 s with a different AI presenter in each video",
+               f"TikTok ({T.HANDLE[p['brand']]}), video of about 18 s" + (f" with {CH.name(p['char'])}, a recurring AI character" if p.get("char") else ", finished video made before the characters"),
                "hip",
                _kn_note(p, "Draft in Metricool with a placeholder photo: upload the video and mark it as AI-generated content. Script and prompt are in the Week 1 to Week 4 tabs of this brand."))
 
@@ -148,7 +149,7 @@ def li(pid):
     y, m, d = (int(v) for v in p["date"].split("-"))
     wd = DAYS[dt.date(y, m, d).weekday()]
     return row(wd, m, d, "11:00", LI_EN[pid],
-               "LinkedIn, square video of about 30 s with an AI presenter, B2B",
+               f"LinkedIn, square video of about 30 s with {CH.name(p['char'])}, a recurring AI character, B2B",
                "hip",
                _kn_note(p, "Draft in Metricool with the text only (it already includes “AI-generated video.”): upload the video and turn on captions. Script and prompts are in the Week 3 and Week 4 tabs of this brand."))
 
@@ -160,7 +161,7 @@ kg = ""
 kg += section(
     "Weeks 1 to 4: day by day (New York time)",
     callout(
-        "Three posts per week, Saturday stories and two TikToks with AI presenters (Tuesday and Thursday at 6 PM; in week 3, Tuesday and Wednesday because of Thanksgiving). Products in brackets are confirmed with the store. Ají amarillo and chicha morada already appear in the account's posts.",
+        "Three posts per week, Saturday stories and two TikToks (Tuesday and Thursday at 6 PM; in week 3, Tuesday and Wednesday because of Thanksgiving). Rosa and Dre, the two recurring AI characters, host the TikToks and the Reels and appear in five single images; the Google posts, the Stories and the team photo have no generated people. Products in brackets are confirmed with the store. Ají amarillo and chicha morada already appear in the account's posts.",
         "Pace.",
     )
     + week_block(
@@ -213,7 +214,7 @@ kg += section(
 )
 kg += section(
     "Weeks 5 to 13: topic of each week",
-    callout("From week 5 the two weekly TikToks continue, with a different AI presenter in each video. Their topics are set at each review, based on what worked.") + wlist(
+    callout("From week 5 the two weekly TikToks continue, hosted by Rosa and Dre. Their topics are set at each review, based on what worked.") + wlist(
         [
             wrow(5, "Christmas table, part one", "Product for holiday dishes, a Reel of a Christmas dish and the hours notice.", "Tuesday 8: holiday in Peru."),
             wrow(6, "Christmas orders and hours", "Deadline for advance orders and special hours, product by product.", "Review 3 on Friday, December 18."),
@@ -263,7 +264,7 @@ kn += section(
 kn += section(
     "Weeks 1 to 4: day by day (New York time)",
     callout(
-        "Full 7-day plan: Monday Google, Tuesday LinkedIn, Wednesday Instagram and Facebook (carousel), Thursday LinkedIn, Friday Reel, Saturday single image on Instagram and Facebook, Sunday Instagram. On top of that, two TikToks per week with AI presenters at 6 PM (Tuesday and Thursday; in week 3, Tuesday and Friday) and two LinkedIn videos with an AI presenter, on Wednesday, November 25 and December 2 at 11 AM. Weeks 1 and 2 are already scheduled with their media; weeks 3 and 4 are drafts.",
+        "Full 7-day plan: Monday Google, Tuesday LinkedIn, Wednesday Instagram and Facebook (carousel), Thursday LinkedIn, Friday Reel, Saturday single image on Instagram and Facebook, Sunday Instagram. On top of that, two TikToks per week at 6 PM (Tuesday and Thursday; in week 3, Tuesday and Friday) and two LinkedIn videos, on Wednesday, November 25 and December 2 at 11 AM. Maya and Daniel, the two recurring AI characters, host the TikToks from Nov 12 and the LinkedIn videos, and appear in the Reels of Nov 27, Dec 4 and Dec 6 and in the single images of Nov 28, Nov 29 and Dec 5. Weeks 1 and 2 are already scheduled with their media and keep it; weeks 3 and 4 are drafts.",
         "Pace.",
     )
     + week_block(
@@ -330,7 +331,7 @@ kn += section(
 )
 kn += section(
     "Weeks 5 to 13: topic of each week",
-    callout("From week 5 the Friday Reel and the Saturday single image continue. Their topics are set at each review, based on what worked. The two weekly TikToks continue with a different AI presenter in each video.") + wlist(
+    callout("From week 5 the Friday Reel and the Saturday single image continue. Their topics are set at each review, based on what worked. The two weekly TikToks continue, hosted by Maya and Daniel.") + wlist(
         [
             wrow(5, "Before and after the holidays", "Checklist for hosting guests and a next-day checklist for homes; on LinkedIn, the office in the last week of the year."),
             wrow(6, "Year-end for offices and buildings", "Deep clean before the break and an invitation to book January dates with a single action: request an estimate.", "Review 3 on Friday, December 18."),

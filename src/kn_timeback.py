@@ -494,6 +494,86 @@ def apply(g):
         "What do you want your January weekends to look like?\n\nSend us your preferred dates for a clean and we will plan it with you. Request a free estimate: " + UTM_FB + "dec2026_january\n\n" + TAGS_FB,
     )
 
+    apply_chars(g)
+
+
+def apply_chars(g):
+    """Maya and Daniel in the draft Reels (Nov 27, Dec 4, Dec 6). Weeks 1 and 2 are scheduled with finished media and stay as they are."""
+    import characters as CH
+    P = g["anchor_char"]
+
+    # ---- 11-27 Maya: guests leave, the room is handled, her afternoon is hers
+    t, clips, ig, fb = g["REEL"]["11-27"]
+    clips = list(clips)
+    clips[0] = (clips[0][0], "Maya stands in the doorway of a bright guest room with an unmade bed and used sheets, in morning light")
+    clips[2] = (clips[2][0], "Maya sits on a windowsill with a leaf-green mug and an open book, the made bed softly blurred behind her")
+    g["REEL"]["11-27"] = (t, clips, ig, fb)
+    g["SEED"]["11-27"] = (
+        P("maya",
+          "a bright New York guest room with white walls, a wooden nightstand with a small lamp, and a window with sheer curtains. "
+          "Soft morning daylight at about 5500 K. Props: white linens, a stack of folded white towels, a small green plant on the nightstand, a damp leaf-green microfiber cloth, "
+          "an open book with no readable text and a leaf-green ceramic mug on the windowsill. "
+          "Palette: warm whites, natural wood and leaf green."),
+        [
+            ("Maya stands in the doorway of the guest room with one hand on the frame, looking at the unmade bed with the used sheets, and lets out a small breath; nothing else moves.",
+             "medium shot from inside the room toward the doorway, locked off with a very slow push-in of about 5%, her face in three-quarter view.",
+             "quiet room tone and a soft breath."),
+            g["SEED"]["11-27"][1][1],
+            ("Maya sits on the windowsill beside an open book with a leaf-green mug in both hands, steam rising, looking out the window and then briefly toward the camera with a relaxed smile; the made bed is softly blurred behind her.",
+             "medium close-up on the windowsill, slow rack focus from the mug to her face.",
+             "a soft ceramic touch, then calm quiet."),
+        ],
+    )
+    g["REEL_CHAR"]["11-27"] = "maya"
+
+    # ---- 12-04 Daniel: the spots everyone touches (a tip with a bridge)
+    t, clips, ig, fb = g["REEL"]["12-04"]
+    clips = list(clips)
+    clips[0] = (clips[0][0], "Daniel wipes a brushed-steel apartment door handle with a leaf-green microfiber cloth in a bright entryway")
+    clips[2] = (clips[2][0], "Daniel sets a TV remote control square on a coffee table after wiping it, no readable button labels")
+    g["REEL"]["12-04"] = (t, clips, ig, fb)
+    g["SEED"]["12-04"] = (
+        P("daniel",
+          "a bright New York apartment entryway that opens onto a living room, with white walls, a brushed-steel door handle and a wooden coffee table. "
+          "Soft daylight at about 5500 K. Props: a damp leaf-green microfiber cloth and a TV remote control with no readable button labels. "
+          "Palette: warm whites, brushed steel, natural wood and leaf green."),
+        [
+            ("Daniel wipes a brushed-steel apartment door handle with the leaf-green cloth, top to bottom, leaving the steel gleaming, his eyes on the handle.",
+             "medium close-up at the handle, locked off with a very slow push-in of about 5%, his face softly in frame.",
+             "a soft wipe on metal."),
+            ("Daniel's hand wipes a white wall light switch plate with the cloth in one short stroke; only his hand and the cuff of his sweater show.",
+             "close-up at the switch, slow lateral slide of about 15 cm to the right.",
+             "a short, soft wipe."),
+            ("Daniel wipes a TV remote control on the coffee table, sets it down square to the table edge and looks up toward the camera with a small nod.",
+             "starts on the remote, then a slow rise to a medium shot that reveals Daniel and the tidy living room.",
+             "a soft wipe, then the small click of the remote on wood."),
+        ],
+    )
+    g["REEL_CHAR"]["12-04"] = "daniel"
+
+    # ---- 12-06 Maya: winter entryway already handled
+    t, clips, ig, fb = g["REEL"]["12-06"]
+    clips = list(clips)
+    clips[0] = (clips[0][0], "Maya stands inside an entryway door looking down at white road-salt marks on a dark slate floor")
+    clips[2] = (clips[2][0], "Maya holds a leaf-green mug at the window beside the entryway, snow falling softly outside")
+    g["REEL"]["12-06"] = (t, clips, ig, fb)
+    anchor, scenes = g["SEED"]["12-06"]
+    place = anchor.split(" The same hands in every scene")[0]
+    scenes = list(scenes)
+    g["SEED"]["12-06"] = (
+        P("maya", place),
+        [
+            ("Maya stands just inside the entryway door in her sage-green sweater, looking down at white road-salt marks and wet boot prints on the dark slate floor, and lets out a small tired breath.",
+             "medium shot from inside the entryway, locked off with a very slow push-in of about 5%, her face in three-quarter view and the salt-marked floor in the lower frame.",
+             "quiet room tone with a faint hum of the city."),
+            scenes[1],
+            ("Maya lifts a leaf-green mug from the sill of the window beside the entryway, snow falling softly outside; steam rises and she smiles toward the window, then briefly toward the camera.",
+             "medium close-up on Maya and the sill, slow rack focus from the mug to the falling snow.",
+             "a soft ceramic touch, then calm quiet."),
+        ],
+    )
+    g["REEL_CHAR"]["12-06"] = "maya"
+
 
 # ====================================================================== TikTok (modulo tiktok_data)
 def apply_tiktok(m):
@@ -524,7 +604,7 @@ def apply_tiktok(m):
     upd("KN3", TIP, "Tip first. The last beat hands the list to Klean N Green NYC.", m_chip(),
         beats=["Turnover day? Do it in this order.",
                "Strip the bed and start the laundry. Bathroom next, because it needs time to sit. Then kitchen and floors. Finish with a walk-through.",
-               "Or send the whole list our way and keep your day for guests and tenants. Klean N Green NYC."],
+               "Or send us the list and keep your day for guests and tenants. Klean N Green NYC."],
         cap_lines=["Turnover day? Do it in this order.", "",
                    "Laundry, bathroom, kitchen and floors, walk-through. Or send the list our way and keep your day.", cta])
 

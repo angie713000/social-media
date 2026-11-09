@@ -24,10 +24,11 @@ Genera `contenidos-por-marca.html` en la raíz. Solo usa la biblioteca estándar
 | `build_estrategia.py` | Estilos, componentes y fuentes compartidos |
 | `build_publicaciones.py` | Posts de Klean NYC (semanas 1 a 4) |
 | `build_kg_publicaciones.py` | Posts de K&G Market y los Overview de ambas marcas |
-| `tiktok_data.py`, `tiktok_html.py` | Los 16 TikToks con presentador IA (guion, prompt, caption, borrador de Metricool) |
+| `characters.py` | Los 4 personajes IA recurrentes (Rosa y Dre en K&G Market; Maya y Daniel en Klean NYC): aspecto fijo, voz, retratos de referencia, mapa de qué pieza usa a quién |
+| `tiktok_data.py`, `tiktok_html.py` | Los 16 TikToks (guion, prompt, caption, borrador de Metricool) y la sección «Characters» de ambos Overview |
 | `kn_timeback.py` | Estrategia «tiempo recuperado» de Klean NYC: tipo de cada pieza (25 de tiempo recuperado, 13 de consejo con puente), textos nuevos de las semanas 1 a 4 y líneas puente |
 | `linkedin_video.py` | Los 2 videos de LinkedIn de Klean NYC (25 nov y 2 dic) |
-| `build_calendario.py` | Calendario de 3 meses en español de las cuatro marcas |
+| `build_calendario.py` | Calendario de 3 meses (en inglés) de las cuatro marcas |
 | `build_unificado.py` | Une calendario y posts en el HTML final |
 
 ## Metricool
@@ -52,3 +53,10 @@ Genera `contenidos-por-marca.html` en la raíz. Solo usa la biblioteca estándar
 ## Revisiones previstas
 
 Viernes 20 de noviembre, 4 de diciembre, 18 de diciembre y 29 de enero.
+
+## Personajes (`src/characters.py`)
+
+- Dos personajes IA recurrentes por marca: Rosa y Dre (K&G Market), Maya y Daniel (Klean NYC, junto a Clover el gato). Son anfitriones, no empleados ni clientes; todo lo que los muestra se rotula como IA.
+- El aspecto de cada uno (`look`, `outfit`, `hands`) se escribe una sola vez en `CHARS`; todos los prompts de video e imagen lo toman de ahí. Cambiar una línea y ejecutar `python3 build_all.py` actualiza todos los prompts.
+- Quién aparece en cada pieza: TikToks y videos de LinkedIn en los diccionarios `TT` y `LI` de `characters.py`; Reels e imágenes en `build_kg_publicaciones.py` (K&G) y en `build_publicaciones.py` / `kn_timeback.py` (Klean).
+- Los personajes no cambian ningún borrador de Metricool: los captions siguen igual. No aparecen en las semanas 1 y 2 de Klean (ya programadas con material terminado), ni en el TikTok del 10 de noviembre, ni en los posts de Google, las Stories y la foto del equipo de K&G.

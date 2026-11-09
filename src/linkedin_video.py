@@ -29,7 +29,7 @@ def add(id_, date, title, hook, presenter, setting, beats, cap_lines, tags, camp
 add("LI1", "2026-11-25", "Four details to send before booking a cleaning crew",
     "Booking a cleaning crew? Send these 4 details",
     "Woman in her 40s, olive skin, dark wavy shoulder-length hair, charcoal blazer over a white top",
-    "a bright small-office reception area with a plant, a wooden desk and a window with soft daylight behind her",
+    "a bright small-office reception area with a plant, a wooden desk and a window with soft daylight behind him",
     ["Booking a cleaning crew for a unit or an office? Four details help avoid rework.",
      "One: access, meaning keys, codes and building rules. Two: scope, meaning which rooms and what is included. "
      "Three: the deadline, including move-in or inspection dates. Four: the condition today, with a few photos.",
@@ -68,8 +68,10 @@ add("LI2", "2026-12-02", "A unit that will sit empty over the holidays: four thi
 
 
 import kn_timeback as _KT
+import characters as CH
 
 _KT.apply_linkedin(sys.modules[__name__])
+CH.apply_linkedin(sys.modules[__name__])
 
 
 def spoken(p):
@@ -98,7 +100,8 @@ def prompt(p, n):
         "Square 1:1 video, about 15 seconds, one continuous take, camera at eye level on a tripod. "
         f"{cont}"
         f"{p['presenter']} speaks directly to the camera in {p['setting']}. "
-        "Calm, professional, conversational delivery with small hand gestures, chest-up framing, "
+        + (CH.ref_sentence(p["char"]) + " " if p.get("char") else "")
+        + "Calm, professional, conversational delivery with small hand gestures, chest-up framing, "
         "soft natural light, realistic skin and hair, accurate lip sync. "
         f"Spoken dialogue in English: \"{clip_text(p, n)}\" "
         "No on-screen text, no subtitles, no logos, no watermark, no music. "
@@ -131,8 +134,7 @@ def dlabel(p):
 def piece(p):
     day = dlabel(p)
     words = len(spoken(p).split())
-    meta = meta_box([
-        f"**Presenter:** {p['presenter']}.",
+    meta = meta_box(TH.pmeta(p) + [
         f"**Setting:** {p['setting']}.",
         f"**Length:** about 30 seconds in two clips of about 15 seconds, square 1:1, 1080 x 1080 px. Spoken script of {words} words.",
         "**Continuity:** if the tool accepts a reference image, use a frame of clip 1 for clip 2 so the person and the room match.",
@@ -150,7 +152,7 @@ def piece(p):
             + B.copybox("Video prompt, clip 2 of 2 (beats 3 and 4)", prompt(p, 2))
         ), True)
         + det("Post text and hashtags (already in the Metricool draft)", B.copybox("LinkedIn text", caption(p)), False)
-        + det("Presenter and settings", meta + extra, False)
+        + det("Character and setting", meta + extra, False)
         + det("Metricool draft: status", status, False)
     )
     return (
@@ -158,7 +160,7 @@ def piece(p):
         '<div class="slot"><div class="when">'
         f"<b>{e(day)}</b><span>11 AM</span></div>"
         f'<div class="what"><p class="what-t">LinkedIn video: {e(p["title"])}</p>'
-        f'<p class="what-m">LinkedIn · AI presenter video, about 30 s {tchip(p)}{chipx("Draft · add video", "hip")} {chipx(p["chip"], "hip")}</p></div></div>'
+        f'<p class="what-m">LinkedIn · AI video, about 30 s {TH.cchip(p)}{tchip(p)}{chipx("Draft · add video", "hip")} {chipx(p["chip"], "hip")}</p></div></div>'
         f'<p class="angle"><b>Angle:</b> {e(p["angle"])}</p>'
         f"{body}</article>"
     )
@@ -173,18 +175,18 @@ def board_row(p):
 
 def overview_section():
     rs = B.section(
-        "LinkedIn videos with AI presenters",
+        "LinkedIn videos with Daniel",
         B.callout(
             "Two videos for LinkedIn, on top of the eight text and carousel posts: Wednesday Nov 25 and Wednesday Dec 2 at 11 AM New York time. "
-            "Each video is about 30 seconds, square, with a different AI-generated presenter who talks to the camera in a B2B tone for property managers and office teams. "
+            "Each video is about 30 seconds, square, with Daniel, the property and office host, who talks to the camera in a B2B tone for property managers and office teams. Daniel is one of the two recurring AI characters of the brand; his reference portrait and rules are in the Characters section above. "
             "They sit on Wednesdays so no existing draft moves, and the posts already scheduled for Nov 10 to Nov 19 are not affected by these two videos. "
             "The script, video prompts and text are inside weeks 3 and 4.",
             "Format.",
         )
         + B.tiles([
-            ("2", "LinkedIn videos, each with its own presenter, script, two video prompts and text", "dato"),
+            ("2", "LinkedIn videos with Daniel, each with its script, two video prompts and text", "dato"),
             ("2", "drafts saved in Metricool with the text and no media, until you add the video", "dato"),
-            ("30 s", "about, per video: 4 beats and 69 words, in two clips", "dato"),
+            ("30 s", f"about, per video: 4 beats and {min(len(spoken(p).split()) for p in L)} to {max(len(spoken(p).split()) for p in L)} words, in two clips", "dato"),
         ]),
         "Wednesday at 11 AM is the second-strongest slot of the week in Metricool's LinkedIn best-time data. Thursday at 11 AM is the strongest and is already used by the text posts.",
     )
@@ -196,7 +198,7 @@ def overview_section():
     rs += B.section("LinkedIn videos: how they differ from the TikToks", how)
     checks = [
         "**Disclosure.** Both texts end with \"AI-generated video.\" Metricool has no AI label field for LinkedIn, so keep that line.",
-        "**The presenter is a host.** The scripts give tips and invite the viewer to get time back. None says \"I clean units\" or \"our team\", because an invented person cannot speak as an employee or a customer.",
+        "**Daniel is a host.** The scripts give tips and invite the viewer to get time back. None says \"I clean units\" or \"our team\", because an invented person cannot speak as an employee or a customer. Daniel introduces himself by name in the first LinkedIn video, because this audience has not seen the TikToks.",
         "**Claims.** The tips are general. No script promises results, hours saved or certifications. LI1 is a time-back piece and LI2 is a tip with a bridge.",
         "**Link.** Both texts point to the contact page with LinkedIn tracking tags, and the URL shortener is on, like the other LinkedIn drafts.",
         "**Dates.** Nov 25 is the day before Thanksgiving. Dec 2 follows the Dec 1 year-end calendar post. Tell me if you want either one moved.",

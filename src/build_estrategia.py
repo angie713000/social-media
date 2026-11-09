@@ -724,6 +724,7 @@ main{max-width:920px;margin:0 auto;padding:8px 16px 40px}
 .traits{display:flex;flex-direction:column;gap:12px}
 .trait{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:10px}
 .trait h4{font-size:16px;color:var(--brand)}
+.blk h4.sub{font-size:15px;color:var(--brand);margin:16px 0 6px}
 .trait small{display:block;font:600 11.5px/1.2 var(--font-body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
 .trait .aj{background:var(--brand-soft);border-radius:8px;padding:10px 12px}
 .trait .aj small{color:var(--brand)}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# TikTok con presentadores IA distintos: 8 piezas por marca, martes y jueves 18:00 (hora de Nueva York)
+# TikTok con personajes IA recurrentes (dos por marca): 8 piezas por marca, martes y jueves 18:00 (hora de Nueva York)
 import json
 
 KG_PIN = "\U0001F4CD 9420 Church Ave, Brooklyn, NY 11212"
@@ -209,8 +209,10 @@ add("KN8", "kn", "2026-12-03", "Four spots to clean once a month",
 
 import sys as _sys
 import kn_timeback as _KT
+import characters as CH
 
 _KT.apply_tiktok(_sys.modules[__name__])
+CH.apply_tiktok(_sys.modules[__name__])
 
 
 def spoken(p):
@@ -225,7 +227,8 @@ def prompt(p):
     return (
         "Vertical 9:16 smartphone-style video, about 18 seconds, one continuous take. "
         f"{p['presenter']} speaks directly to the camera in {p['setting']}. "
-        "Natural, friendly, conversational delivery with small hand gestures, chest-up handheld selfie framing, "
+        + (CH.ref_sentence(p["char"]) + " " if p.get("char") else "")
+        + "Natural, friendly, conversational delivery with small hand gestures, chest-up handheld selfie framing, "
         "soft natural light, realistic skin and hair, accurate lip sync. "
         f"Spoken dialogue in English: \"{spoken(p)}\" "
         "No on-screen text, no subtitles, no logos, no watermark, no music. "

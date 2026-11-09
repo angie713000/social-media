@@ -15,6 +15,7 @@ with contextlib.redirect_stdout(io.StringIO()):
 OUT = "publicaciones-marcas-sem1-4.html"
 e, fmt = B.e, B.fmt
 det, meta_box, chipx = K.det, K.meta_box, K.chipx
+import characters as CH
 
 ADDR = "📍 9420 Church Ave, Brooklyn, NY 11212"
 SITE = "https://kngmarket.com/?utm_source=google&utm_medium=business-profile&utm_campaign={camp}&utm_content=learn-more"
@@ -56,7 +57,19 @@ TG_FB = "#KGMarket #BrooklynEats #NYCFood"
 # ---------------------------------------------------------------------------
 # Prompts de imagen (fotografía realista, sin texto, sin personas)
 # ---------------------------------------------------------------------------
-def style_kg(fmt_txt="Vertical 4:5 format, 1080 x 1350 px"):
+def people_kg(chars=None):
+    """The 'who may appear' sentence of an image prompt."""
+    if not chars:
+        return "No people. "
+    ident = " ".join(f"{CH.identity(k)}." for k in chars)
+    return (
+        f"The only {'person' if len(chars) == 1 else 'people'} in the image {'is' if len(chars) == 1 else 'are'}: {ident} "
+        + (CH.ref_sentence(chars[0]) if len(chars) == 1 else CH.ref_sentence_many(chars))
+        + " Candid and relaxed, natural proportions and natural hands with five fingers, no exaggerated smile, not posing for the camera. No other people. "
+    )
+
+
+def style_kg(fmt_txt="Vertical 4:5 format, 1080 x 1350 px", chars=None):
     return (
         "Photorealistic photograph, not an illustration, for a social media post by K&G Market, a Peruvian and Caribbean grocery store in Brooklyn, New York. "
         f"{fmt_txt}. Shot on a full-frame camera with a 35mm lens, soft natural daylight with a warm tone, shallow depth of field, "
@@ -64,14 +77,14 @@ def style_kg(fmt_txt="Vertical 4:5 format, 1080 x 1350 px"):
         "Natural wood, linen and white ceramic surfaces, so the color of the produce stands out. "
         "No cartoon, vector or 3D-render look. "
         "No text of any kind anywhere in the image: no letters, numbers, signs, labels or writing, and no readable brand names or logos on packaging. "
-        "No people. "
+        + people_kg(chars) +
         "Leave a clear, uncluttered square of 160 x 160 px at the bottom left for the logo, which I will add later; do not draw a logo."
     )
 
 
-def photo_prompt(scene, top_space=False, fmt_txt="Vertical 4:5 format, 1080 x 1350 px"):
+def photo_prompt(scene, top_space=False, fmt_txt="Vertical 4:5 format, 1080 x 1350 px", chars=None):
     extra = " Keep the top third of the frame calm and uncluttered, because text will be added there later." if top_space else ""
-    return style_kg(fmt_txt) + extra + " Scene: " + scene + "."
+    return style_kg(fmt_txt, chars) + extra + " Scene: " + scene + "."
 
 
 GOOGLE_FMT = "Horizontal 4:3 format, 1200 x 900 px"
@@ -101,6 +114,34 @@ SC_DEC = (
     "warm string lights softly blurred in the background"
 )
 
+# Scenes with the recurring characters: the product stays the hero, the character holds or presents it.
+SC_AJI_C = (
+    "a rustic wooden table with a pile of fresh ají amarillo peppers, long, slightly curved, glossy and bright orange-yellow, a few cut open to show the seeds, "
+    "a small white ceramic bowl of smooth orange-yellow ají paste, a halved lime and a bunch of cilantro; "
+    "Rosa stands behind the table in the left third of the frame, holding one fresh ají amarillo between two fingers and looking at it with a soft smile; "
+    "the peppers fill the foreground and the lower half of the frame, low camera angle, warm side light"
+)
+SC_CARIB_C = (
+    "[product] arranged on a rustic wooden table in a natural, abundant way, a small white ceramic bowl and a linen cloth beside it, "
+    "one or two ingredients that go with it at the edge of the frame; "
+    "Dre leans on the table in the right third of the frame, holding one [product] up in one hand and looking at it with a relaxed smile; "
+    "the product fills the foreground, low camera angle, warm side light"
+)
+SC_THANKS_C = (
+    "a Thanksgiving spread on a wooden table: a roasted whole squash, ripe plantains, ears of corn in their husks, a bunch of green herbs and small yellow-orange peppers "
+    "around a large white platter; Rosa and Dre sit at the far side of the table, shown from the chest up in the middle third of the frame, "
+    "passing a dish of sweet plantains between them and smiling at each other, not at the camera; the wall above them is plain and calm, warm late-afternoon light"
+)
+SC_RESTOCK_C = (
+    "a freshly restocked wooden shelf with neat rows of [product], arranged generously and evenly, natural daylight from a window on the left; "
+    "Rosa stands beside the shelf in the right third of the frame, holding one [product] in her hands as if showing it, looking at it with a soft smile"
+)
+SC_DEC_C = (
+    "a steaming ceramic pitcher and two glasses on a wooden table, surrounded by cinnamon sticks, whole cloves, oranges, half a pineapple and a small pine branch, "
+    "warm string lights softly blurred in the background; Rosa and Dre sit at the far side of the table, shown from the chest up in the middle third of the frame, "
+    "each holding a glass and smiling at each other, not at the camera; the wall above them is plain and calm"
+)
+
 # ---------------------------------------------------------------------------
 # Piezas reutilizables
 # ---------------------------------------------------------------------------
@@ -111,15 +152,37 @@ REAL_PHOTO = [
 ]
 
 
+_MO = {m: i + 1 for i, m in enumerate(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])}
+
+
+def iso_of(day):
+    """'Mon, Nov 9' -> '2026-11-09'"""
+    m = re.match(r"\w{3}, (\w{3}) (\d+)", day)
+    return f"2026-{_MO[m.group(1)]:02d}-{int(m.group(2)):02d}"
+
+
 def alt_det(alt):
     return det("Alt text", meta_box(["Paste this in the image's alt text field when you add the image."]) + B.copybox("Alt text", alt), False)
 
 
-def just_in(day, title, scene, alt, ig, fb, nets="Instagram and Facebook", real=True, top_space=False):
+def just_in(day, title, scene, alt, ig, fb, nets="Instagram and Facebook", real=True, top_space=False, chars=None, scene_char=None):
     parts = []
-    if real:
-        parts.append(det("Real photo (best option)", meta_box(REAL_PHOTO), False))
-    parts.append(det("Image: prompt" + (" (alternative to a real photo)" if real else ""), meta_box(["No text and no people in the image: the caption carries the message."]) + B.copybox("Image prompt (complete, paste into the generator)", photo_prompt(scene, top_space)), False))
+    if chars:
+        who = CH.names(chars)
+        for k in chars:
+            CH.use(k, iso_of(day), "Image", title)
+        parts.append(det(f"Image with {who}: prompt", meta_box([
+            f"No text in the image: the caption carries the message. {who} {'is' if len(chars) == 1 else 'are'} the only {'person' if len(chars) == 1 else 'people'} allowed.",
+            "Attach the reference portrait" + ("" if len(chars) == 1 else "s") + " from the Characters section in the Overview.",
+            CH.tag_ai_note(chars),
+        ]) + B.copybox("Image prompt (complete, paste into the generator)", photo_prompt(scene_char, top_space, chars=chars)), False))
+        if real:
+            parts.append(det("Real photo without the character (alternative)", meta_box(REAL_PHOTO), False))
+        parts.append(det("Image: prompt without the character (alternative)", meta_box(["Use this if you prefer a product-only image. No text and no people."]) + B.copybox("Image prompt (complete, paste into the generator)", photo_prompt(scene, top_space)), False))
+    else:
+        if real:
+            parts.append(det("Real photo (best option)", meta_box(REAL_PHOTO), False))
+        parts.append(det("Image: prompt" + (" (alternative to a real photo)" if real else ""), meta_box(["No text and no people in the image: the caption carries the message."]) + B.copybox("Image prompt (complete, paste into the generator)", photo_prompt(scene, top_space)), False))
     parts.append(alt_det(alt))
     parts.append(det("Instagram text", B.copybox("Instagram text", ig), True))
     parts.append(det("Facebook text", B.copybox("Facebook text", fb), False))
@@ -180,6 +243,11 @@ SD_CONSTRAINTS = (
     "Constraints: only hands appear, no faces; no text, captions, subtitles or watermarks; no logos, no readable brand names or labels on packaging; "
     "no cartoon, illustration or 3D-render look; natural, physically plausible hand, food and liquid movement; no cuts inside the scene."
 )
+SD_CONSTRAINTS_CHAR = (
+    "Constraints: the only person is the cook, a fictional AI character who does not speak and looks at the camera only for a moment; no other people; "
+    "no text, captions, subtitles or watermarks; no logos, no readable brand names or labels on packaging; "
+    "no cartoon, illustration or 3D-render look; natural, physically plausible hand, face, food and liquid movement; no cuts inside the scene."
+)
 SD_SETTINGS = [
     "Aspect ratio 9:16 (vertical), the highest resolution the tool offers (1080 x 1920 px or above).",
     f"{SD_SECS} seconds per scene, 3 scenes, about 12 seconds in total. Use 5 seconds per scene if you want more room to trim when editing.",
@@ -187,6 +255,7 @@ SD_SETTINGS = [
     "Paste the continuity block at the start of every scene prompt, so the kitchen, the light, the props and the hands stay the same from scene to scene.",
     "Generate and judge one scene at a time. If the tool offers it, use the last frame of the previous scene as the reference for the next one.",
     "Change one line at a time: if the movement is right but the framing is off, edit only the Camera line; if the framing is right but the movement is off, edit only Subject and action.",
+    "Every Reel here has a cook, Rosa or Dre. The constraints line allows that one character and nobody else; attach the character's reference portrait to every scene prompt.",
 ]
 ANCHOR = (
     "a bright home kitchen with a light-wood table and a white linen cloth, soft window daylight from the left, white ceramic plates and bowls; "
@@ -194,7 +263,16 @@ ANCHOR = (
 )
 
 
-def seedance_scene(title, i, n, anchor, action, camera, sound):
+def anchor_char(k, extra):
+    x = CH.c(k)
+    return (
+        "a bright home kitchen with a light-wood table and a white linen cloth, soft window daylight from the left, white ceramic plates and bowls; "
+        f"the cook is {CH.identity(k)}, with the same face, hair and clothes in every scene. {CH.ref_sentence(k)} "
+        f"In close-ups only {CH.pron(k, 'pos')} hands show: {x['hands']}. {extra[:1].upper() + extra[1:]}"
+    )
+
+
+def seedance_scene(title, i, n, anchor, action, camera, sound, cons=None):
     return (
         f"Scene {i} of {n} of a vertical Reel titled \"{title}\". 9:16, {SD_SECS} seconds, one continuous shot.\n"
         f"Continuity: {anchor}\n"
@@ -202,20 +280,20 @@ def seedance_scene(title, i, n, anchor, action, camera, sound):
         f"Camera: {camera}\n"
         f"Style: {SD_STYLE}.\n"
         f"Sound: {sound}\n"
-        + SD_CONSTRAINTS
+        + (cons or SD_CONSTRAINTS)
     )
 
 
-def seedance_combo(title, anchor, scenes):
+def seedance_combo(title, anchor, scenes, cons=None, through="the same hands are the through-line"):
     n = len(scenes)
     parts = [
-        f"Vertical 9:16 Reel titled \"{title}\", {n * SD_SECS} seconds, a {n}-shot sequence with clean cuts between shots; the same hands are the through-line.",
+        f"Vertical 9:16 Reel titled \"{title}\", {n * SD_SECS} seconds, a {n}-shot sequence with clean cuts between shots; {through}.",
         f"Continuity: {anchor}",
     ]
     for i, (action, camera, sound) in enumerate(scenes, 1):
         parts.append(f"Shot {i} ({SD_SECS} s): {action} Camera: {camera} Sound: {sound}")
     parts.append(f"Style: {SD_STYLE}.")
-    parts.append(SD_CONSTRAINTS)
+    parts.append(cons or SD_CONSTRAINTS)
     return "\n".join(parts)
 
 
@@ -224,14 +302,15 @@ REEL = {
     "11-11": dict(
         title="3 ways to use ají amarillo",
         overlay=["3 ways to use ají amarillo · 1. Huancaína", "2. Ají de gallina", "3. Ceviche"],
-        anchor=ANCHOR.format(extra="a small bunch of ají amarillo peppers rests in the same top corner of every frame"),
+        char="rosa",
+        anchor=anchor_char("rosa", "a small bunch of ají amarillo peppers rests in the same top corner of every frame."),
         scenes=[
-            ("hands pour a thick, smooth, bright yellow sauce from a small white jug over halved boiled yellow potatoes on a white plate",
-             "slow overhead push-in at a 45-degree angle", "soft pouring"),
-            ("a wooden spoon lifts a spoonful of creamy yellow-orange stew with shredded chicken from a white bowl, steam rising, and rests it beside white rice on a plate",
-             "slow side tracking move, shallow depth of field", "faint bubbling and a spoon touching ceramic"),
-            ("hands squeeze half a lime over a glass bowl of fresh white fish cubes with red onion slivers and a few thin slices of ají amarillo, juice dripping",
-             "slow macro push-in", "juice dripping"),
+            ("Rosa pours a thick, smooth, bright yellow sauce from a small white jug over halved boiled yellow potatoes on a white plate, watching the pour with a soft smile",
+             "medium shot from the front-left at table height, slow push-in toward the plate, her face and shoulders in frame", "soft pouring"),
+            ("Rosa's hands lift a wooden spoonful of creamy yellow-orange stew with shredded chicken from a white bowl, steam rising, and rest it beside white rice on a plate; only her hands and the cuffs of her blouse show",
+             "slow side tracking close-up, shallow depth of field", "faint bubbling and a spoon touching ceramic"),
+            ("Rosa squeezes half a lime over a glass bowl of fresh white fish cubes with red onion slivers and a few thin slices of ají amarillo, juice dripping, then glances up with a small smile",
+             "slow push-in from chest height, her face softly in focus behind the bowl", "juice dripping"),
         ],
         vo=["[curious] Ají amarillo, three ways. [warmly] One: huancaína over potatoes.",
             "[warmly] Two: ají de gallina, creamy and warm.",
@@ -249,14 +328,15 @@ REEL = {
     "11-18": dict(
         title="Rice and peas in 3 steps",
         overlay=["Rice and peas in 3 steps · 1. Simmer the beans", "2. Add the rice and one whole scotch bonnet", "3. Cover, steam, fluff"],
-        anchor=ANCHOR.format(extra="a wide pot with a glass lid on the stove, a small bowl of fresh thyme and scallions at the edge of the frame in every scene"),
+        char="dre",
+        anchor=anchor_char("dre", "a wide pot with a glass lid on the stove, a small bowl of fresh thyme and scallions at the edge of the frame in every scene."),
         scenes=[
-            ("hands stir red kidney beans, chopped scallions and fresh thyme in a pot of simmering coconut milk with a wooden spoon",
-             "slow overhead push-in", "gentle simmering"),
-            ("hands pour rinsed white rice into the simmering pot, then rest one whole orange scotch bonnet pepper on top",
+            ("Dre stirs red kidney beans, chopped scallions and fresh thyme in a pot of simmering coconut milk with a wooden spoon, leaning over the pot",
+             "medium shot from the side at stove height, slow push-in, his face in profile", "gentle simmering"),
+            ("Dre's hands pour rinsed white rice into the simmering pot, then rest one whole orange scotch bonnet pepper on top; only his hands and forearms show",
              "slow overhead view, locked off", "rice falling into liquid"),
-            ("hands lift the glass lid from the pot and a cloud of steam rises over the fluffy rice and peas",
-             "slow low-angle push-in toward the pot", "soft steam hiss and a lid lifting"),
+            ("Dre lifts the glass lid from the pot and a cloud of steam rises over the fluffy rice and peas; he looks into the pot, then up with a satisfied smile",
+             "slow low-angle push-in toward the pot, his face behind the steam", "soft steam hiss and a lid lifting"),
         ],
         vo=["[curious] Rice and peas in three steps. One: simmer the beans.",
             "[warmly] Two: add the rice and one whole scotch bonnet.",
@@ -274,14 +354,15 @@ REEL = {
     "11-25": dict(
         title="Sweet plantains for the Thanksgiving table",
         overlay=["Sweet plantains for Thanksgiving · 1. Slice", "2. Fry until golden", "3. Serve warm"],
-        anchor=ANCHOR.format(extra="a wooden cutting board and a black cast-iron skillet on the stove, a small bowl of coarse salt at the edge of the frame in every scene"),
+        char="dre",
+        anchor=anchor_char("dre", "a wooden cutting board and a black cast-iron skillet on the stove, a small bowl of coarse salt at the edge of the frame in every scene."),
         scenes=[
-            ("hands slice a very ripe yellow plantain with black spots on a diagonal into thick slices on a wooden board",
-             "slow overhead push-in", "knife on wood"),
-            ("hands lay thick plantain slices in a hot cast-iron skillet with a little oil, the edges turning deep golden",
+            ("Dre slices a very ripe yellow plantain with black spots on a diagonal into thick slices on a wooden board, glancing up and smiling",
+             "medium shot from the front, slow push-in, his face and the board in frame", "knife on wood"),
+            ("Dre's hands lay thick plantain slices in a hot cast-iron skillet with a little oil, the edges turning deep golden; only his hands show",
              "slow side view at skillet height", "gentle sizzling"),
-            ("hands lift golden, caramelized plantains onto a large white platter, steam rising",
-             "slow overhead pull-back", "tongs touching ceramic"),
+            ("Dre lifts golden, caramelized plantains with tongs onto a large white platter, steam rising, then holds the platter slightly toward the camera with a small smile",
+             "slow pull-back from the platter to a medium shot of Dre", "tongs touching ceramic"),
         ],
         vo=["[curious] Sweet plantains for your Thanksgiving table. One: slice ripe plantains.",
             "[warmly] Two: fry until deep golden.",
@@ -299,14 +380,15 @@ REEL = {
     "12-02": dict(
         title="Chicha morada at home, step by step",
         overlay=["Chicha morada at home · 1. Simmer", "2. Strain, add sugar and lime", "3. Chill and pour over ice"],
-        anchor=ANCHOR.format(extra="a tall glass pitcher and a fine metal strainer on the table, a bowl of lime wedges at the edge of the frame in every scene"),
+        char="rosa",
+        anchor=anchor_char("rosa", "a tall glass pitcher and a fine metal strainer on the table, a bowl of lime wedges at the edge of the frame in every scene."),
         scenes=[
-            ("hands drop purple corn, pineapple peel, a cinnamon stick and whole cloves into a large pot of water on the stove",
+            ("Rosa's hands drop purple corn, pineapple peel, a cinnamon stick and whole cloves into a large pot of water on the stove; only her hands and the cuffs of her blouse show",
              "slow overhead push-in", "water bubbling softly"),
-            ("hands pour a deep purple liquid through a fine strainer into a glass pitcher",
-             "slow side view at table height", "liquid pouring"),
-            ("hands squeeze a lime wedge over a tall glass filled with ice and deep purple chicha morada, droplets falling",
-             "slow macro push-in", "ice settling and droplets"),
+            ("Rosa pours a deep purple liquid through a fine strainer into a glass pitcher, watching it fill",
+             "slow side view at table height, her face softly in frame behind the pitcher", "liquid pouring"),
+            ("Rosa squeezes a lime wedge over a tall glass filled with ice and deep purple chicha morada, droplets falling, then lifts the glass slightly toward the camera and smiles",
+             "slow push-in to a medium close-up", "ice settling and droplets"),
         ],
         vo=["[curious] Chicha morada, step by step. One: simmer purple corn with spices.",
             "[warmly] Two: strain it, then add sugar and lime.",
@@ -325,14 +407,20 @@ REEL = {
 # El guion de voz usa los mismos cuadros de build_publicaciones (tiempos, Eleven v4, guion limpio)
 for _k, _v in REEL.items():
     K.VO["kg-" + _k] = _v["vo"]
+    if _v.get("char"):
+        K.REEL_CHAR["kg-" + _k] = _v["char"]
 
 
 def reel_piece(key):
     r = REEL[key]
     title, anchor, scenes, ov = r["title"], r["anchor"], r["scenes"], r["overlay"]
     n = len(scenes)
+    ch = r.get("char")
+    cons = SD_CONSTRAINTS_CHAR if ch else None
+    if ch:
+        CH.use(ch, iso_of(r["day"]), "Reel", title)
     boxes = "".join(
-        B.copybox(f"Scene {i} of {n}: {ov[i-1]}", seedance_scene(title, i, n, anchor, a, c, s))
+        B.copybox(f"Scene {i} of {n}: {ov[i-1]}", seedance_scene(title, i, n, anchor, a, c, s, cons))
         for i, (a, c, s) in enumerate(scenes, 1)
     )
     overlay = "\n".join(f"Scene {i}: {t}" for i, t in enumerate(ov, 1))
@@ -343,6 +431,8 @@ def reel_piece(key):
     needs = meta_box([
         f"Vertical 9:16, 1080 x 1920 px. {n} scenes of {SD_SECS} seconds each, about {n * SD_SECS} seconds in total.",
         "If the store can film the real dish, a real video beats a generated one. The prompts below are for when it cannot.",
+        *([f"**{CH.name(ch)}** is the cook in this Reel (scenes 1 and 3 show the face; scene 2 shows the hands). Attach {CH.name(ch)}'s reference portrait to every scene prompt. The voiceover is {CH.name(ch)}'s voice; the voice description is in the Characters section of the Overview.",
+           CH.ai_video_note([ch])] if ch else []),
         "Add the on-screen text, the voiceover (script below) and licensed music in the video editor: generators garble text inside video.",
         "Cover: use a frame from scene 1 and add the title in Canva.",
         "The settings and the way the prompts are built are explained in the Overview, under \"Video prompts for Seedance\".",
@@ -352,7 +442,7 @@ def reel_piece(key):
         + det("What the video needs", needs, False)
         + det("Continuity block: paste it at the start of every scene", B.copybox("Continuity block", anchor[0].upper() + anchor[1:]), False)
         + det(f"Seedance prompts: {n} scenes, one prompt per scene", boxes, False)
-        + det("All scenes in one prompt (optional)", B.copybox("Single prompt with three labeled shots", seedance_combo(title, anchor, scenes)), False)
+        + det("All scenes in one prompt (optional)", B.copybox("Single prompt with three labeled shots", seedance_combo(title, anchor, scenes, cons, f"{CH.name(ch)} is the through-line" if ch else "the same hands are the through-line")), False)
         + det("On-screen text by scene", B.copybox("On-screen text (add in the video editor)", overlay), False)
         + det("Voiceover script (audio)", K.vo_boxes("kg-" + key), False)
         + det("Instagram text", B.copybox("Instagram text", r["ig"]), True)
@@ -386,13 +476,30 @@ def story_piece(day, title, frames, note, status=S_SHOOT, nets="Instagram and Fa
     return piece(day, hour, title, nets, fmt_txt, status, body)
 
 
-def fri_notice(day, title, scene, alt, canva, ig, fb):
-    body = (
-        det("What the image needs", meta_box([
+def fri_notice(day, title, scene, alt, canva, ig, fb, chars=None, scene_char=None):
+    if chars:
+        who = CH.names(chars)
+        for k in chars:
+            CH.use(k, iso_of(day), "Image", title)
+        needs = det("What the image needs", meta_box([
+            "4:5 format, 1080 x 1350 px, one image with no text on it. The top third stays clear so the key details can be added in Canva, where the type is crisp.",
+            f"This image shows {who}, in the middle of the frame. Attach the reference portraits from the Characters section in the Overview.",
+            CH.tag_ai_note(chars),
+        ]), False)
+        img = (
+            det(f"Image with {who}: prompt", B.copybox("Image prompt (complete, paste into the generator)", photo_prompt(scene_char, True, chars=chars)), False)
+            + det("Image: prompt without the characters (alternative)", meta_box(["Use this if you prefer a product-only image, or a real photo of the table, the counter or the products. No text and no people."])
+                  + B.copybox("Image prompt (complete, paste into the generator)", photo_prompt(scene, True)), False)
+        )
+    else:
+        needs = det("What the image needs", meta_box([
             "4:5 format, 1080 x 1350 px, one image with no text on it. The top third stays clear so the key details can be added in Canva, where the type is crisp.",
             "A real photo of the table, the counter or the products works better than a generated one if the store has it.",
         ]), False)
-        + det("Image: prompt", B.copybox("Image prompt (complete, paste into the generator)", photo_prompt(scene, True)), False)
+        img = det("Image: prompt", B.copybox("Image prompt (complete, paste into the generator)", photo_prompt(scene, True)), False)
+    body = (
+        needs
+        + img
         + det("Text to add in Canva", B.copybox("Text on the image (Canva)", canva), True)
         + alt_det(alt)
         + det("Instagram text", B.copybox("Instagram text", ig), True)
@@ -409,15 +516,15 @@ W = {}
 # Semana 1
 W[1] = (
     google_piece("Mon, Nov 9", "11-09", "Just in: ají amarillo (Google)", GBP["11-09"], SC_AJI, "kg-nov-wk1")
-    + piece("Mon, Nov 9", "10 AM", "Just in: ají amarillo", "Instagram and Facebook", "Photo", S_PH,
+    + piece("Mon, Nov 9", "10 AM", "Just in: ají amarillo", "Instagram and Facebook", "Image with Rosa", S_IMG,
             just_in("Mon, Nov 9", "Just in: ají amarillo", SC_AJI,
-                    "Fresh ají amarillo peppers, bright orange-yellow, on a wooden table next to a small bowl of ají paste and a halved lime.",
+                    "A woman in her 60s with short silver hair holds a fresh ají amarillo pepper behind a wooden table covered with bright orange-yellow peppers, a small bowl of ají paste and a halved lime.",
                     ("Just in: ají amarillo. 🌶️\nLlegó hoy el ají amarillo, listo para tu mesa.\n\n"
                      "Perfect for ají de gallina, huancaína and ceviche.\nIdeal para ají de gallina, huancaína y ceviche.\n\n"
                      f"{ADDR}\n🕘 Open today [opening hours]\n\nWhat will you cook with it? Tell us below. / ¿Qué vas a cocinar con esto? Cuéntanos.\n\n" + TG_PERU),
                     ("Just in: ají amarillo. 🌶️ Llegó hoy.\n\n"
                      "The base of ají de gallina, huancaína sauce and ceviche is now on our shelves. / La base del ají de gallina, la salsa huancaína y el ceviche ya está en nuestros estantes.\n\n"
-                     f"{ADDR}\n🕘 Open today [opening hours] / Hoy abierto [horario]\n\nStop by, or send us a message with your questions. / Pasa por la tienda o escríbenos tus preguntas.\n\n" + TG_FB)))
+                     f"{ADDR}\n🕘 Open today [opening hours] / Hoy abierto [horario]\n\nStop by, or send us a message with your questions. / Pasa por la tienda o escríbenos tus preguntas.\n\n" + TG_FB), chars=["rosa"], scene_char=SC_AJI_C))
     + reel_piece("11-11")
     + piece("Fri, Nov 13", "10 AM", "Who runs the store", "Instagram and Facebook", "Photo of the team", S_PH,
             det("Real photo: what it needs", meta_box([
@@ -444,26 +551,26 @@ W[1] = (
 # Semana 2
 W[2] = (
     google_piece("Mon, Nov 16", "11-16", "Just in: [Caribbean product] (Google)", GBP["11-16"], SC_CARIB, "kg-nov-wk2")
-    + piece("Mon, Nov 16", "10 AM", "Just in: [Caribbean product]", "Instagram and Facebook", "Photo", S_PH,
+    + piece("Mon, Nov 16", "10 AM", "Just in: [Caribbean product]", "Instagram and Facebook", "Image with Dre", S_IMG,
             meta_box(["Fill in the product before using the prompt: replace **[product]** with the item that arrived (for example plantains, scotch bonnet peppers or sorrel, if the store carries them)."])
             + just_in("Mon, Nov 16", "Just in: [Caribbean product]", SC_CARIB,
-                      "[Product] arranged on a wooden table with a small bowl and a linen cloth.",
+                      "A man in his early 30s with a short beard holds up [product] next to a wooden table with a small bowl and a linen cloth.",
                       ("Just in: [Caribbean product]. 🌴\nLlegó hoy [producto caribeño], listo para tu mesa.\n\n"
                        "Ideal for [use 1] and [use 2].\nIdeal para [uso 1] y [uso 2].\n\n"
                        f"{ADDR}\n🕘 Open today [opening hours]\n\nWhat will you cook with it? Tell us below. / ¿Qué vas a cocinar con esto? Cuéntanos.\n\n" + TG_CARIB),
                       ("Just in: [Caribbean product]. 🌴 Llegó hoy.\n\n"
                        "Ideal for [use 1] and [use 2]. / Ideal para [uso 1] y [uso 2].\n\n"
-                       f"{ADDR}\n🕘 Open today [opening hours] / Hoy abierto [horario]\n\nStop by, or send us a message with your questions. / Pasa por la tienda o escríbenos tus preguntas.\n\n" + TG_FB)))
+                       f"{ADDR}\n🕘 Open today [opening hours] / Hoy abierto [horario]\n\nStop by, or send us a message with your questions. / Pasa por la tienda o escríbenos tus preguntas.\n\n" + TG_FB), chars=["dre"], scene_char=SC_CARIB_C))
     + reel_piece("11-18")
     + fri_notice("Fri, Nov 20", "Thanksgiving: orders and hours", SC_THANKS,
-                 "A Thanksgiving table still life with a roasted squash, ripe plantains, corn in husks and herbs around an empty white platter.",
+                 "A woman in her 60s with short silver hair and a man in his early 30s with a short beard sit at a Thanksgiving table with a roasted squash, ripe plantains, corn in husks and herbs, passing a dish between them.",
                  "Thanksgiving at K&G\nOrders until [date, if offered]\nThu, Nov 26: [hours]\nFri, Nov 27: [hours]\n\nThanksgiving en K&G\nPedidos hasta el [fecha]\n9420 Church Ave, Brooklyn",
                  ("Thanksgiving at K&G: orders and hours. 🦃\nThanksgiving en K&G: pedidos y horario.\n\n"
                   "Orders until [date, if offered]. / Pedidos hasta el [fecha].\nThu, Nov 26: [hours]\nFri, Nov 27: [hours]\n\n"
                   f"{ADDR}\n\nMessage us with your questions, or stop by. / Escríbenos tus preguntas o pasa por la tienda.\n\n" + TG_SEASON),
                  ("Thanksgiving at K&G: orders and hours. 🦃\nThanksgiving en K&G: pedidos y horario.\n\n"
                   "Orders until [date, if offered]. / Pedidos hasta el [fecha].\nThu, Nov 26: [hours]\nFri, Nov 27: [hours]\n\n"
-                  f"{ADDR}\n\nMessage us with your questions, or stop by. / Escríbenos tus preguntas o pasa por la tienda.\n\n" + TG_FB))
+                  f"{ADDR}\n\nMessage us with your questions, or stop by. / Escríbenos tus preguntas o pasa por la tienda.\n\n" + TG_FB), chars=["rosa", "dre"], scene_char=SC_THANKS_C)
     + story_piece("Sat, Nov 21", "Stories: what's in today and how to order ahead",
                   [("Fresh products on the shelf or the counter, wide shot", "What's in today", "What's in today · Qué hay hoy\n[product]"),
                    ("A close-up of one product that is good for the holiday table", "Order ahead", "Order ahead for Thanksgiving · Pedidos para Thanksgiving\n[date, if offered]"),
@@ -531,26 +638,26 @@ W[3] = (
 # Semana 4
 W[4] = (
     google_piece("Mon, Nov 30", "11-30", "Back in stock: [product] (Google)", GBP["11-30"], SC_RESTOCK, "kg-nov-wk4")
-    + piece("Mon, Nov 30", "10 AM", "Just in: [product], back in stock after Thanksgiving", "Instagram and Facebook", "Photo", S_PH,
+    + piece("Mon, Nov 30", "10 AM", "Just in: [product], back in stock after Thanksgiving", "Instagram and Facebook", "Image with Rosa", S_IMG,
             meta_box(["Fill in the product before using the prompt: replace **[product]** with the item that was restocked."])
             + just_in("Mon, Nov 30", "Back in stock", SC_RESTOCK,
-                      "A wooden shelf with neat rows of [product].",
+                      "A woman in her 60s with short silver hair holds [product] next to a wooden shelf with neat rows of the same product.",
                       ("Back in stock: [product]. 🛒\nDe vuelta: [producto].\n\n"
                        "The shelves are full again after Thanksgiving.\nLos estantes están llenos otra vez después de Thanksgiving.\n\n"
                        f"{ADDR}\n🕘 Open today [opening hours]\n\nWhat's on your list? Tell us below. / ¿Qué hay en tu lista? Cuéntanos.\n\n" + TG_PERU),
                       ("Back in stock: [product]. 🛒 De vuelta: [producto].\n\n"
                        "The shelves are full again after Thanksgiving. / Los estantes están llenos otra vez después de Thanksgiving.\n\n"
-                       f"{ADDR}\n🕘 Open today [opening hours] / Hoy abierto [horario]\n\nStop by, or send us a message with your questions. / Pasa por la tienda o escríbenos tus preguntas.\n\n" + TG_FB)))
+                       f"{ADDR}\n🕘 Open today [opening hours] / Hoy abierto [horario]\n\nStop by, or send us a message with your questions. / Pasa por la tienda o escríbenos tus preguntas.\n\n" + TG_FB), chars=["rosa"], scene_char=SC_RESTOCK_C))
     + reel_piece("12-02")
     + fri_notice("Fri, Dec 4", "December at K&G: hours and Christmas orders", SC_DEC,
-                 "A steaming pitcher and two glasses on a wooden table with cinnamon, cloves, oranges, pineapple and a pine branch.",
+                 "A woman in her 60s and a man in his early 30s sit at a wooden table with glasses, a steaming pitcher, cinnamon, cloves, oranges, pineapple and a pine branch.",
                  "December at K&G\nChristmas orders until [date, if offered]\nHours: [hours]\nDec 24: [hours] · Dec 25: [hours]\n\nDiciembre en K&G\nPedidos de Navidad hasta el [fecha]\n9420 Church Ave, Brooklyn",
                  ("December at K&G: hours and Christmas orders. 🎄\nDiciembre en K&G: horarios y pedidos de Navidad.\n\n"
                   "Orders until [date, if offered]. / Pedidos hasta el [fecha].\nHours: [hours]\nDec 24: [hours] · Dec 25: [hours]\n\n"
                   f"{ADDR}\n\nSave this post so you have the hours. / Guarda esta publicación para tener los horarios.\n\n" + TG_XMAS),
                  ("December at K&G: hours and Christmas orders. 🎄\nDiciembre en K&G: horarios y pedidos de Navidad.\n\n"
                   "Orders until [date, if offered]. / Pedidos hasta el [fecha].\nHours: [hours]\nDec 24: [hours] · Dec 25: [hours]\n\n"
-                  f"{ADDR}\n\nMessage us with your questions, or stop by. / Escríbenos tus preguntas o pasa por la tienda.\n\n" + TG_FB))
+                  f"{ADDR}\n\nMessage us with your questions, or stop by. / Escríbenos tus preguntas o pasa por la tienda.\n\n" + TG_FB), chars=["rosa", "dre"], scene_char=SC_DEC_C)
     + story_piece("Sat, Dec 5", "Stories: store open and product of the week",
                   [("The store entrance or the counter, open and bright", "Open today", "Open today · Abierto hoy\n[opening hours / horario]"),
                    ("A close-up of the product of the week", "Product of the week", "Product of the week · Producto de la semana\n[product]"),
@@ -562,15 +669,15 @@ W[4] = (
 # VISIÓN GENERAL DE K&G MARKET
 # ---------------------------------------------------------------------------
 board_rows = [
-    ("Mon, Nov 9 · 10 AM", "Instagram and Facebook", "Just in: ají amarillo", S_PH),
+    ("Mon, Nov 9 · 10 AM", "Instagram and Facebook", "Just in: ají amarillo · Rosa", S_IMG),
     ("Mon, Nov 9 · 11 AM", "Google", "Just in: ají amarillo", S_IMG),
     ("Wed, Nov 11 · 12 PM", "Instagram and Facebook", "Reel: 3 ways to use ají amarillo", S_VID),
     ("Fri, Nov 13 · 10 AM", "Instagram and Facebook", "Who runs the store", S_PH),
     ("Sat, Nov 14 · 10 AM", "Instagram and Facebook", "Stories: open, product of the week, hours", S_SHOOT),
-    ("Mon, Nov 16 · 10 AM", "Instagram and Facebook", "Just in: [Caribbean product]", S_PH),
+    ("Mon, Nov 16 · 10 AM", "Instagram and Facebook", "Just in: [Caribbean product] · Dre", S_IMG),
     ("Mon, Nov 16 · 11 AM", "Google", "Just in: [Caribbean product]", S_IMG),
     ("Wed, Nov 18 · 12 PM", "Instagram and Facebook", "Reel: Rice and peas in 3 steps", S_VID),
-    ("Fri, Nov 20 · 10 AM", "Instagram and Facebook", "Single image: Thanksgiving orders and hours", S_IMG),
+    ("Fri, Nov 20 · 10 AM", "Instagram and Facebook", "Single image: Thanksgiving orders and hours · Rosa and Dre", S_IMG),
     ("Sat, Nov 21 · 10 AM", "Instagram and Facebook", "Stories: what's in today, how to order ahead", S_SHOOT),
     ("Mon, Nov 23 · 10 AM", "Instagram and Facebook", "Carousel: Thanksgiving, products for your table", S_IMG),
     ("Mon, Nov 23 · 11 AM", "Google", "Thanksgiving week", S_IMG),
@@ -578,10 +685,10 @@ board_rows = [
     ("Thu, Nov 26 · 9 AM", "Instagram and Facebook", "Thanksgiving greeting (one Story)", S_OPT),
     ("Fri, Nov 27 · 10 AM", "Instagram and Facebook", "Single image: Small Business Saturday", S_PH),
     ("Sat, Nov 28 · 10 AM", "Instagram and Facebook", "Stories: Small Business Saturday", S_SHOOT),
-    ("Mon, Nov 30 · 10 AM", "Instagram and Facebook", "Just in: [product], back in stock", S_PH),
+    ("Mon, Nov 30 · 10 AM", "Instagram and Facebook", "Just in: [product], back in stock · Rosa", S_IMG),
     ("Mon, Nov 30 · 11 AM", "Google", "Back in stock: [product]", S_IMG),
     ("Wed, Dec 2 · 12 PM", "Instagram and Facebook", "Reel: Chicha morada at home", S_VID),
-    ("Fri, Dec 4 · 10 AM", "Instagram and Facebook", "Single image: December hours and Christmas orders", S_IMG),
+    ("Fri, Dec 4 · 10 AM", "Instagram and Facebook", "Single image: December hours and Christmas orders · Rosa and Dre", S_IMG),
     ("Sat, Dec 5 · 10 AM", "Instagram and Facebook", "Stories: open, product of the week", S_SHOOT),
 ]
 board = (
@@ -593,9 +700,9 @@ board = (
 
 formats = (
     '<div class="tablewrap"><table class="rev"><thead><tr><th>Piece</th><th>Size</th><th>Notes</th></tr></thead><tbody>'
-    "<tr><th scope='row'>Photo and single image</th><td>1080 x 1350 px (4:5)</td><td>Instagram and Facebook. Real photo first; the generated image is the alternative. No text on the generated image: the key details are added in Canva.</td></tr>"
+    "<tr><th scope='row'>Photo and single image</th><td>1080 x 1350 px (4:5)</td><td>Instagram and Facebook. Five of them (Nov 9, 16, 20, 30 and Dec 4) show Rosa or Dre as the main image; a real photo or a product-only image is the alternative. No text on the generated image: the key details are added in Canva.</td></tr>"
     "<tr><th scope='row'>Carousel (Nov 23)</th><td>1080 x 1350 px (4:5)</td><td>3 images, one product per image.</td></tr>"
-    "<tr><th scope='row'>Reel</th><td>1080 x 1920 px (9:16)</td><td>About 12 seconds, 3 Seedance scenes of about 4 seconds, hands only. Wednesdays, Instagram and Facebook.</td></tr>"
+    "<tr><th scope='row'>Reel</th><td>1080 x 1920 px (9:16)</td><td>About 12 seconds, 3 Seedance scenes of about 4 seconds, with Rosa or Dre cooking: the face shows in two scenes and only the hands in the third. Wednesdays, Instagram and Facebook.</td></tr>"
     "<tr><th scope='row'>Stories</th><td>1080 x 1920 px (9:16)</td><td>Saturdays, 3 frames shot that day with the phone. Keep key content out of the top and bottom 250 px.</td></tr>"
     "<tr><th scope='row'>Google Business Profile</th><td>1200 x 900 px (4:3)</td><td>Mondays. A real photo is better; the generated image is the alternative. No phone number in the text.</td></tr>"
     "</tbody></table></div>"
@@ -611,6 +718,7 @@ confirm = [
     "**Website.** The Google button points to kngmarket.com, which does not appear in Google yet (see the SEO review). If you prefer, use the Call now button once the phone is confirmed.",
     "**Hashtag #KGMarket.** Check on Instagram that no other business uses it. The Small Business Saturday and Christmas posts add #SmallBusinessSaturday and #ChristmasFood to the calendar's sets.",
     "**Team photo (Nov 13).** Needs the team's permission and their names. Never use a generated image for that post.",
+    "**Rosa and Dre.** They are AI characters, not staff, and they appear only in the TikToks, the four Reels and five single images. Generate each portrait once (see Characters) and attach it every time. The AI label is needed on every video and image that shows them. The Google posts, the Stories and the team post stay free of generated people.",
     "**Spanish lines.** They are written in neutral Spanish. Tell me if the store prefers Peruvian or Caribbean terms for any product.",
     "**Colors and logo.** No palette or fonts were provided for K&G Market, so the prompts use natural food colors and leave the bottom-left corner empty for your logo. If you share the logo and colors, the Canva overlays can match.",
     "**Metricool.** The 36 drafts (28 for Instagram, Facebook and Google, plus 8 for TikTok) are created for K&G Market and none is published. Before scheduling each one, in the editor: replace the Instagram placeholder image with the real one, fill in every bracket, switch the four Instagram and Facebook Reels to Reel and upload the video, add the Brooklyn location on Instagram and Facebook, add the image and button on the Google posts, and on TikTok replace the placeholder photo with the video and switch on the AI-generated content label.",
@@ -620,7 +728,7 @@ confirm_html = "<ul class='checks'>" + "".join(f"<li>{fmt(x)}</li>" for x in con
 look = (
     meta_box([
         "Photorealistic, soft daylight with a warm tone, wood, linen and white ceramic, so the produce color carries the image.",
-        "No text and no people in generated images. Text goes on in Canva; people appear only in real photos, with their permission.",
+        "No text in generated images; text goes on in Canva. Rosa and Dre, the two AI characters, are the only people allowed in generated images and videos. Real people appear only in real photos, with their permission.",
         "Bottom-left corner empty for the logo, as in the Klean N Green NYC pack.",
         "Stories are not generated: they are shot that day with the phone.",
     ])
@@ -631,11 +739,11 @@ rs = B.section(
     "What is ready and what is missing",
     B.tiles([
         ("21", "pieces over four weeks: 8 for Instagram and Facebook (photos, a carousel, single images), 4 Reels, 4 Google posts, 4 Saturday Story sets and one optional Thanksgiving Story", "dato"),
-        ("4", "Reels, each with a continuity block, 3 Seedance scene prompts, a voiceover with Eleven v4 tags, on-screen text and captions", "dato"),
+        ("4", "Reels, two with Rosa and two with Dre, each with a continuity block, 3 Seedance scene prompts, a voiceover with Eleven v4 tags, on-screen text and captions", "dato"),
         ("4", "Google Business Profile posts, one every Monday, with text, button and link", "dato"),
-        ("13", "image prompts for product photos, notices, the carousel and the four Google posts, all without text and without people", "dato"),
+        ("13", "image prompts for product photos, notices, the carousel and the four Google posts, all without text. Five of the posts also have a version with Rosa or Dre; the Google posts and the carousel have no people", "dato"),
         ("36", "drafts in Metricool for K&G Market (Instagram, Facebook, Google and TikTok), none published; they still need the real images, the bracket details and the videos for the Reels and TikToks", "dato"),
-        ("8", "TikToks of about 18 seconds, each with a different AI presenter, a script, a video prompt and a caption", "dato"),
+        ("8", "TikToks of about 18 seconds, four with Rosa and four with Dre, each with a script, a video prompt and a caption", "dato"),
     ])
     + B.callout(
         "All texts are written in English with a Spanish line, as the brand voice defines. What is left is the real material: opening hours, the products behind each bracket, the team photo, and the Saturday Stories on the day. Nothing is published without approval.",
@@ -668,10 +776,10 @@ kn_panels = re.sub(r'(id|aria-labelledby)="(panel|tab)-(resumen|sem[1-4])"', r'\
 kn_panels = kn_panels.replace("Four-week board", "Four-week calendar")
 
 import tiktok_html as TH
+import linkedin_video as LV  # imported first so Daniel's LinkedIn videos are registered before the Characters sections are built
 
 kg_panels = TH.inject(kg_panels, "kg")
 kn_panels = TH.inject(kn_panels, "kn")
-import linkedin_video as LV
 kn_panels = LV.inject(kn_panels, "kn")
 
 
