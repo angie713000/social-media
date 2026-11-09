@@ -4,6 +4,9 @@
 import io
 import re
 import contextlib
+import os
+
+os.environ.setdefault("CONTENT_LANG", "en")
 
 with contextlib.redirect_stdout(io.StringIO()):
     import build_estrategia as B

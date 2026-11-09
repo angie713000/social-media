@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-# Une el calendario (español, 4 marcas) y el pack de publicaciones (inglés, 2 marcas) en un solo HTML.
-# Estructura: pestañas de marca arriba; dentro de cada marca, pestañas internas.
-#   Resumen | K&G Market | Klean NYC | JDET Capital | Klean Perú
-#   K&G Market y Klean NYC: Calendario, Overview, Week 1 a 4. JDET y Perú: solo Calendario.
+# Joins the calendar (4 brands) and the posts pack (2 brands) into a single English HTML.
+# Structure: brand tabs on top; inside each brand, inner tabs.
+#   Summary | K&G Market | Klean NYC | JDET Capital | Klean Peru
+#   K&G Market and Klean NYC: Calendar, Overview, Week 1 to 4. JDET and Peru: Calendar only.
+import os
 import re
+
+os.environ.setdefault("CONTENT_LANG", "en")
 
 CAL = "calendario-contenidos.html"
 PACK = "publicaciones-marcas-sem1-4.html"
@@ -16,7 +19,7 @@ OPEN = '<section role="tabpanel" id="panel-'
 
 
 def panels(html, stops):
-    """Devuelve {id: (clase_de_marca, contenido_interno)} de todos los paneles de pestaña."""
+    """Returns {id: (brand_class, inner_content)} for every tab panel."""
     out = {}
     starts = [m.start() for m in re.finditer(re.escape(OPEN), html)]
     for i, a in enumerate(starts):
@@ -43,26 +46,26 @@ pp = panels(pack, ['<div class="brandpane"', "<footer"])
 assert set(cp) == {"resumen", "kg-market", "klean-nyc", "jdet-capital", "klean-peru"}, set(cp)
 assert {k for k in pp} == {f"{b}-{t}" for b in ("kg", "kn") for t in ("resumen", "sem1", "sem2", "sem3", "sem4")}, set(pp)
 
-# Los botones «Copiar» del calendario usan ids cbNNN que chocan con los del pack: se les antepone una «c».
+# The calendar's Copy buttons use cbNNN ids that clash with the pack's: they get an extra "c" prefix.
 def reid(s):
     return re.sub(r'\bcb(\d+)\b', r'ccb\1', s)
 
 
-# marca -> (etiqueta de la pestaña de marca, clase de color, [(id interno, etiqueta, clase, contenido)])
+# brand -> (brand tab label, color class, [(inner id, label, class, content)])
 BR = {}
-BR["res"] = ("Resumen", "b-all", [("cal", "Resumen", "b-all", reid(cp["resumen"][1]))])
-BR["kg"] = ("K&amp;G Market", "b-kg", [("cal", "Calendario", "b-kg", reid(cp["kg-market"][1]))]
+BR["res"] = ("Summary", "b-all", [("cal", "Summary", "b-all", reid(cp["resumen"][1]))])
+BR["kg"] = ("K&amp;G Market", "b-kg", [("cal", "Calendar", "b-kg", reid(cp["kg-market"][1]))]
             + [(t, lab, "b-kg", pp[f"kg-{t}"][1]) for t, lab in
                (("resumen", "Overview"), ("sem1", "Week 1"), ("sem2", "Week 2"), ("sem3", "Week 3"), ("sem4", "Week 4"))])
-BR["kn"] = ("Klean NYC", "b-klean", [("cal", "Calendario", "b-klean", reid(cp["klean-nyc"][1]))]
+BR["kn"] = ("Klean NYC", "b-klean", [("cal", "Calendar", "b-klean", reid(cp["klean-nyc"][1]))]
             + [(t, lab, "b-klean", pp[f"kn-{t}"][1]) for t, lab in
                (("resumen", "Overview"), ("sem1", "Week 1"), ("sem2", "Week 2"), ("sem3", "Week 3"), ("sem4", "Week 4"))])
-BR["jd"] = ("JDET Capital", "b-jdet", [("cal", "Calendario", "b-jdet", reid(cp["jdet-capital"][1]))])
-BR["kp"] = ("Klean Perú", "b-peru", [("cal", "Calendario", "b-peru", reid(cp["klean-peru"][1]))])
+BR["jd"] = ("JDET Capital", "b-jdet", [("cal", "Calendar", "b-jdet", reid(cp["jdet-capital"][1]))])
+BR["kp"] = ("Klean Peru", "b-peru", [("cal", "Calendar", "b-peru", reid(cp["klean-peru"][1]))])
 ORDER = ["res", "kg", "kn", "jd", "kp"]
 FIRST = "cal"
 
-# ------------------------------------------------------------------ cabecera, CSS y JS
+# ------------------------------------------------------------------ header, CSS and JS
 head = pack[:pack.index("<body")]
 css_pack = re.search(r"<style>(.*?)</style>", pack, re.S).group(1)
 css_cal = re.search(r"<style>(.*?)</style>", cal, re.S).group(1)
@@ -87,17 +90,16 @@ known = {re.sub(r"\s+", " ", r) for r in rules(css_pack)}
 extra = [r for r in rules(css_cal) if re.sub(r"\s+", " ", r) not in known]
 assert 5 <= len(extra) <= 30, len(extra)
 OVERRIDES = """
-/* Unificación: barra de marcas con desplazamiento horizontal (hay cinco marcas) */
+/* Unification: brand bar with horizontal scrolling (there are five brands) */
 .brandlist{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .brandlist::-webkit-scrollbar{display:none}
 .btab{flex:0 0 auto;white-space:nowrap}
 .btab.b-all .dot{background:var(--muted)}
 """
-css = css_pack + "\n/* Reglas del calendario */\n" + "\n".join(extra) + "\n" + OVERRIDES
+css = css_pack + "\n/* Calendar rules */\n" + "\n".join(extra) + "\n" + OVERRIDES
 head = head.replace(css_pack, css)
-head = re.sub(r"<title>.*?</title>", "<title>Contenidos por marca: calendario y publicaciones</title>", head, flags=re.S)
-head = head.replace('<html lang="en">', '<html lang="es">')
-assert 'lang="es"' in head and "Contenidos por marca" in head and "Reglas del calendario" in head
+head = re.sub(r"<title>.*?</title>", "<title>Content by brand: calendar and posts</title>", head, flags=re.S)
+assert 'lang="en"' in head and "Content by brand" in head and "Calendar rules" in head
 
 JS = """
 (function(){
@@ -183,9 +185,8 @@ JS = """
     var text=src.textContent;
     var label=btn.getAttribute('data-label')||btn.textContent;
     btn.setAttribute('data-label',label);
-    var es=/^Copiar/i.test(label);
     function done(ok){
-      btn.textContent=ok?(es?'Copiado':'Copied'):(es?'Seleccione y copie':'Select and copy');
+      btn.textContent=ok?'Copied':'Select and copy';
       setTimeout(function(){btn.textContent=label;},1800);
     }
     function fallback(){
@@ -207,15 +208,15 @@ js = JS % {
     "order": json.dumps(ORDER),
 }
 
-# ------------------------------------------------------------------ cuerpo
+# ------------------------------------------------------------------ body
 body = []
 body.append('<body>\n<header class="top">\n'
-            '<p class="eyebrow">9 de noviembre de 2026 al 7 de febrero de 2027</p>\n'
-            '<h1>Contenidos por marca</h1>\n'
-            '<p class="lead">Una pestaña por marca. En K&amp;G Market y Klean NYC, «Calendario» es el plan de 3 meses en español, y '
-            '«Overview» y «Week 1» a «Week 4» son los posts de 4 semanas listos para copiar (en inglés), con guiones, prompts y TikToks. '
-            'JDET Capital y Klean Perú tienen su calendario.</p>\n</header>')
-body.append('<nav class="brands" id="brands"><div class="brandlist" role="tablist" aria-label="Marcas">')
+            '<p class="eyebrow">November 9, 2026 to February 7, 2027</p>\n'
+            '<h1>Content by brand</h1>\n'
+            '<p class="lead">One tab per brand. For K&amp;G Market and Klean NYC, “Calendar” is the 3-month plan, and '
+            '“Overview” and “Week 1” to “Week 4” are the 4 weeks of posts ready to copy, with scripts, prompts and TikToks. '
+            'JDET Capital and Klean Peru have their calendar.</p>\n</header>')
+body.append('<nav class="brands" id="brands"><div class="brandlist" role="tablist" aria-label="Brands">')
 for i, b in enumerate(ORDER):
     lab, bcls, _ = BR[b]
     body.append(f'<button type="button" role="tab" id="btab-{b}" class="btab {bcls}" aria-controls="brand-{b}" '
@@ -226,7 +227,7 @@ for i, b in enumerate(ORDER):
     hid = "" if i == 0 else " hidden"
     body.append(f'<div class="brandpane" id="brand-{b}" role="tabpanel" aria-labelledby="btab-{b}"{hid}>')
     if len(tabs) > 1:
-        body.append(f'<nav class="tabs" id="tabs-{b}"><div class="tablist" role="tablist" aria-label="Secciones de {lab}">')
+        body.append(f'<nav class="tabs" id="tabs-{b}"><div class="tablist" role="tablist" aria-label="{lab} sections">')
         for j, (tid, tlab, tcls, _) in enumerate(tabs):
             body.append(f'<button type="button" role="tab" id="tab-{b}-{tid}" class="tab {tcls}" aria-controls="panel-{b}-{tid}" '
                         f'aria-selected="{"true" if j == 0 else "false"}" data-tab="{tid}"><i class="dot"></i>{tlab}</button>')
@@ -238,13 +239,13 @@ for i, b in enumerate(ORDER):
         body.append(f'<section role="tabpanel" id="panel-{b}-{tid}" class="panel {tcls}" aria-labelledby="{labelled}"{hid2}>{content}</section>')
     body.append('</div>\n</div>')
 body.append('<footer>\n<div class="fnt">\n'
-            '<p><b>Cómo usarlo.</b> Elige la marca arriba y luego una pestaña. Los botones «Copiar» y «Copy» copian el texto de cada caja. '
-            'Las horas son de Nueva York, salvo las de Klean Perú, que son de Lima.</p>\n'
-            '<p>Las etiquetas Referencia e Hipótesis tienen el mismo significado que en la página de estrategia. Los datos entre corchetes se completan con información real de cada negocio. '
-            'Salvo el ají amarillo y la chicha morada, que ya aparecen en publicaciones de la cuenta, los productos y platos se confirman con la tienda.</p>\n'
-            '<p>Los posts en inglés salen de la estrategia y del calendario de cada marca. Lo que depende del negocio está en «Before approving» de cada Overview. '
-            'Las semanas 5 a 13 se detallan día por día en cada revisión. JDET Capital y Klean Perú dependen de las definiciones de la semana 1. '
-            'No se publica nada sin aprobación.</p>\n</div>\n</footer>')
+            '<p><b>How to use it.</b> Pick the brand at the top, then a tab. The “Copy” buttons copy the text of each box. '
+            'Times are New York time, except those of Klean Peru, which are Lima time.</p>\n'
+            '<p>The Reference and Hypothesis labels have the same meaning as on the strategy page. Items in brackets are filled in with real information from each business. '
+            'Except for ají amarillo and chicha morada, which already appear in the account\'s posts, products and dishes are confirmed with the store.</p>\n'
+            '<p>The posts come from each brand\'s strategy and calendar. What depends on the business is under “Before approving” in each Overview. '
+            'Weeks 5 to 13 are detailed day by day at each review. JDET Capital and Klean Peru depend on the week 1 definitions. '
+            'Nothing is published without approval. K&amp;G Market captions are bilingual (English and Spanish) on purpose, for the store\'s customers.</p>\n</div>\n</footer>')
 body.append(f"<script>{js}</script>\n</body>\n</html>\n")
 
 html = head + "\n".join(body)

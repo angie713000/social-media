@@ -2,6 +2,9 @@
 # Genera klean-nyc-publicaciones-sem1-4.html: prompts de imagen, copy y hashtags de Klean N Green NYC
 # para las semanas 1 a 4, reutilizando estilos y scripts de build_estrategia.py
 import io
+import os
+
+os.environ.setdefault("CONTENT_LANG", "en")
 import json
 import re
 import contextlib

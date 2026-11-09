@@ -3,6 +3,14 @@
 import html
 import re
 import itertools
+import os
+
+# Idioma de la interfaz compartida: «en» para el HTML unificado, «es» para la página de estrategia.
+EN = os.environ.get("CONTENT_LANG", "es") == "en"
+
+
+def L(es, en):
+    return en if EN else es
 
 OUT = "estrategia-contenidos.html"
 _ids = itertools.count(1)
@@ -17,7 +25,7 @@ def fmt(s):
 
 
 def chip(kind):
-    label = {"dato": "Dato", "ref": "Referencia", "hip": "Hipótesis"}[kind]
+    label = {"dato": L("Dato", "Data"), "ref": L("Referencia", "Reference"), "hip": L("Hipótesis", "Hypothesis")}[kind]
     return f'<span class="chip chip-{kind}">{label}</span>'
 
 
@@ -40,8 +48,8 @@ def trait(label, hoy, ajuste):
     return (
         '<div class="trait">'
         f'<h4>{e(label)}</h4>'
-        f'<div class="hoy"><small>Hoy</small><p>{fmt(hoy)}</p></div>'
-        f'<div class="aj"><small>Ajuste</small><p>{fmt(ajuste)}</p></div>'
+        f'<div class="hoy"><small>{L("Hoy", "Today")}</small><p>{fmt(hoy)}</p></div>'
+        f'<div class="aj"><small>{L("Ajuste", "Adjustment")}</small><p>{fmt(ajuste)}</p></div>'
         "</div>"
     )
 
@@ -55,8 +63,8 @@ def voice(dice, evita, extra=""):
     v = "".join(f"<li>{fmt(x)}</li>" for x in evita)
     return (
         '<div class="voice">'
-        f'<div><h4>La voz dice</h4><ul>{d}</ul></div>'
-        f'<div><h4>La voz evita</h4><ul>{v}</ul></div>'
+        f'<div><h4>{L("La voz dice", "The voice says")}</h4><ul>{d}</ul></div>'
+        f'<div><h4>{L("La voz evita", "The voice avoids")}</h4><ul>{v}</ul></div>'
         "</div>" + (f'<p class="note">{fmt(extra)}</p>' if extra else "")
     )
 
@@ -92,7 +100,7 @@ def copybox(title, text):
     return (
         '<div class="copybox">'
         f'<div class="copybar"><span>{e(title)}</span>'
-        f'<button type="button" class="copybtn" data-copy="cb{n}">Copiar</button></div>'
+        f'<button type="button" class="copybtn" data-copy="cb{n}">{L("Copiar", "Copy")}</button></div>'
         f'<pre id="cb{n}">{e(text)}</pre></div>'
     )
 
@@ -102,7 +110,7 @@ def tagbox(title, tags):
     return (
         '<div class="copybox">'
         f'<div class="copybar"><span>{e(title)}</span>'
-        f'<button type="button" class="copybtn" data-copy="cb{n}">Copiar</button></div>'
+        f'<button type="button" class="copybtn" data-copy="cb{n}">{L("Copiar", "Copy")}</button></div>'
         f'<p class="tags" id="cb{n}">{e(tags)}</p></div>'
     )
 
@@ -113,8 +121,8 @@ def kpis(rows):
         for a, b, c in rows
     )
     return (
-        '<div class="tablewrap"><table class="kpi"><thead><tr><th>Métrica</th>'
-        "<th>Hoy</th><th>Meta propuesta</th></tr></thead>"
+        f'<div class="tablewrap"><table class="kpi"><thead><tr><th>{L("Métrica", "Metric")}</th>'
+        f'<th>{L("Hoy", "Today")}</th><th>{L("Meta propuesta", "Proposed target")}</th></tr></thead>'
         f"<tbody>{body}</tbody></table></div>"
     )
 
@@ -612,11 +620,11 @@ rs += section(
 # ENSAMBLE
 # --------------------------------------------------------------------------
 BRANDS = [
-    ("resumen", "b-all", "Resumen"),
+    ("resumen", "b-all", L("Resumen", "Summary")),
     ("kg-market", "b-kg", "K&G Market"),
     ("klean-nyc", "b-klean", "Klean NYC"),
     ("jdet-capital", "b-jdet", "JDET Capital"),
-    ("klean-peru", "b-peru", "Klean Perú"),
+    ("klean-peru", "b-peru", L("Klean Perú", "Klean Peru")),
 ]
 
 tabs = "".join(
@@ -821,7 +829,7 @@ JS = """
     var label=btn.getAttribute('data-label')||btn.textContent;
     btn.setAttribute('data-label',label);
     function done(ok){
-      btn.textContent=ok?'Copiado':'Seleccione y copie';
+      btn.textContent=ok?'__OK__':'__NO__';
       setTimeout(function(){btn.textContent=label;},1800);
     }
     function fallback(){
@@ -837,6 +845,8 @@ JS = """
   });
 })();
 """
+
+JS = JS.replace("__OK__", L("Copiado", "Copied")).replace("__NO__", L("Seleccione y copie", "Select and copy"))
 
 FONTS = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
 
@@ -874,6 +884,7 @@ DOC = f"""<!DOCTYPE html>
 </html>
 """
 
-with open(OUT, "w", encoding="utf-8") as f:
-    f.write(DOC)
-print("ok", len(DOC))
+if __name__ == "__main__":
+    with open(OUT, "w", encoding="utf-8") as f:
+        f.write(DOC)
+    print("ok", len(DOC))

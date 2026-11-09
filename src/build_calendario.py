@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-# Genera calendario-contenidos.html reutilizando estilos y scripts de build_estrategia.py
+# Builds calendario-contenidos.html (English), reusing styles and scripts from build_estrategia.py
 import datetime as dt
 import io
 import contextlib
+import os
+
+os.environ.setdefault("CONTENT_LANG", "en")
 
 with contextlib.redirect_stdout(io.StringIO()):
     import build_estrategia as B
@@ -10,9 +13,9 @@ with contextlib.redirect_stdout(io.StringIO()):
 OUT = "calendario-contenidos.html"
 e, fmt, chip = B.e, B.fmt, B.chip
 
-DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
-MON = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
-MONF = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+MONF = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 START = dt.date(2026, 11, 9)
 
 
@@ -20,43 +23,51 @@ def D(m, d):
     return dt.date(2026 if m >= 11 else 2027, m, d)
 
 
+def h12(h):
+    """'18:00' -> '6 PM'; '11:30' -> '11:30 AM'."""
+    hh, mm = (int(x) for x in h.split(":"))
+    suf = "AM" if hh < 12 else "PM"
+    h2 = hh % 12 or 12
+    return f"{h2} {suf}" if mm == 0 else f"{h2}:{mm:02d} {suf}"
+
+
 def week_range(n):
     a = START + dt.timedelta(days=7 * (n - 1))
     b = a + dt.timedelta(days=6)
     if a.month == b.month:
-        return f"{a.day} al {b.day} de {MONF[b.month-1]}"
-    return f"{a.day} de {MONF[a.month-1]} al {b.day} de {MONF[b.month-1]}"
+        return f"{MONF[a.month-1]} {a.day} to {b.day}"
+    return f"{MONF[a.month-1]} {a.day} to {MONF[b.month-1]} {b.day}"
 
 
 def short_range(n):
     a = START + dt.timedelta(days=7 * (n - 1))
     b = a + dt.timedelta(days=6)
     if a.month == b.month:
-        return f"{a.day} al {b.day} {MON[b.month-1]}"
-    return f"{a.day} {MON[a.month-1]} al {b.day} {MON[b.month-1]}"
+        return f"{MON[a.month-1]} {a.day} to {b.day}"
+    return f"{MON[a.month-1]} {a.day} to {MON[b.month-1]} {b.day}"
 
 
 def row(wd, m, d, hour, title, meta, kind, note=""):
     date = D(m, d)
-    assert DAYS[date.weekday()] == wd, f"Fecha incoherente: {wd} {d}/{m} es {DAYS[date.weekday()]}"
-    return B.slot(f"{wd} {d} {MON[m-1]}", hour, title, meta, kind, note)
+    assert DAYS[date.weekday()] == wd, f"Inconsistent date: {wd} {MON[m-1]} {d} is {DAYS[date.weekday()]}"
+    return B.slot(f"{wd} {MON[m-1]} {d}", h12(hour), title, meta, kind, note)
 
 
 def week_block(n, rows, note=""):
     body = "".join(rows)
     n_html = f'<p class="note">{fmt(note)}</p>' if note else ""
     return (
-        f'<h4 class="wkh">Semana {n}<span>{e(week_range(n))}</span></h4>'
+        f'<h4 class="wkh">Week {n}<span>{e(week_range(n))}</span></h4>'
         f'<ul class="slots">{body}</ul>{n_html}'
     )
 
 
 def wrow(n, theme, text, key="", phase=""):
-    ph = {1: "Base", 2: "Temporada", 3: "Consolidación"}[1 if n <= 4 else 2 if n <= 8 else 3]
+    ph = {1: "Base", 2: "Season", 3: "Consolidation"}[1 if n <= 4 else 2 if n <= 8 else 3]
     k = f'<p class="wk">{fmt(key)}</p>' if key else ""
     return (
         '<li class="wrow">'
-        f'<div><p class="wn">S{n}</p><p class="wd">{e(short_range(n))}</p></div>'
+        f'<div><p class="wn">W{n}</p><p class="wd">{e(short_range(n))}</p></div>'
         f'<div><p class="wt">{fmt(theme)} <span class="ph">{ph}</span></p><p class="wp">{fmt(text)}</p>{k}</div></li>'
     )
 
@@ -71,23 +82,23 @@ import sys as _sys
 _sys.path.insert(0, ".")
 import tiktok_data as T
 
-TT_ES = {
-    "KG1": "Ají amarillo: el sabor de la cocina peruana",
-    "KG2": "Plátano verde, amarillo o negro: para qué sirve cada uno",
-    "KG3": "Arroz con frijoles caribeño: el scotch bonnet entero",
-    "KG4": "¿Está maduro tu mango? Sin mirar el color",
-    "KG5": "Un acompañante nuevo para la mesa de Thanksgiving",
-    "KG6": "Cómo elegir una piña dulce",
-    "KG7": "Cómo elegir la yuca (y nunca comerla cruda)",
-    "KG8": "Cinco productos para empezar a cocinar peruano y caribeño",
-    "KN1": "Mito: más producto no limpia más",
-    "KN2": "¿Qué harías con tu sábado, si la limpieza ya estuviera hecha?",
-    "KN3": "Día de rotación: el orden que ahorra tiempo",
-    "KN4": "Nunca mezcles estos dos productos de limpieza",
-    "KN5": "Recibir invitados: 15 minutos antes de que lleguen",
-    "KN6": "Contratar una empresa de limpieza es recuperar tu tiempo: cuatro preguntas",
-    "KN7": "Tres errores que esparcen la suciedad",
-    "KN8": "Cuatro puntos para limpiar una vez al mes",
+TT_EN = {
+    "KG1": "Ají amarillo: the yellow pepper behind Peruvian flavor",
+    "KG2": "Green, yellow or black plantain: what each one is for",
+    "KG3": "Rice and peas: keep the scotch bonnet whole",
+    "KG4": "Is your mango ripe? Skip the color test",
+    "KG5": "A new side for the Thanksgiving table",
+    "KG6": "How to pick a sweet pineapple",
+    "KG7": "How to pick yuca (and never eat it raw)",
+    "KG8": "Five products to start cooking Peruvian and Caribbean",
+    "KN1": "Myth: more cleaner means cleaner",
+    "KN2": "What would you do with your Saturday?",
+    "KN3": "Turnover day: the order that saves time",
+    "KN4": "Never mix these two cleaners",
+    "KN5": "Hosting this week: 15 minutes before guests arrive",
+    "KN6": "Four questions to ask a cleaning company",
+    "KN7": "Three mistakes that spread dirt",
+    "KN8": "Four spots to clean once a month",
 }
 
 
@@ -95,40 +106,40 @@ def tt(pid):
     p = next(x for x in T.P if x["id"] == pid)
     y, m, d = (int(v) for v in p["date"].split("-"))
     wd = DAYS[dt.date(y, m, d).weekday()]
-    return row(wd, m, d, "18:00", f"TikTok: {TT_ES[pid]}",
-               f"TikTok ({T.HANDLE[p['brand']]}), video de unos 18 s con presentador IA distinto en cada video",
+    return row(wd, m, d, "18:00", f"TikTok: {TT_EN[pid]}",
+               f"TikTok ({T.HANDLE[p['brand']]}), video of about 18 s with a different AI presenter in each video",
                "hip",
-               _kn_note(p, "Borrador en Metricool con una foto provisoria: subir el video y marcar «contenido generado por IA». Guion y prompt en las pestañas Week 1 a Week 4 de esta marca."))
+               _kn_note(p, "Draft in Metricool with a placeholder photo: upload the video and mark it as AI-generated content. Script and prompt are in the Week 1 to Week 4 tabs of this brand."))
 
-TIPO_ES = {"Time back": "Tiempo recuperado", "Tip + bridge": "Consejo con puente"}
-EST_PROG = "Ya programada en Metricool con sus medios terminados: solo se propone cambiar el texto, a la espera de tu aprobación."
-EST_BORR = "Borrador en Metricool con el texto anterior: se propone texto nuevo, a la espera de tu aprobación."
+
+EST_PROG = "Already scheduled in Metricool with its finished media: only a text change is proposed, pending your approval."
+EST_BORR = "Draft in Metricool with the previous text: new text is proposed, pending your approval."
 
 
 def _kn_note(p, base):
-    """Nota de un TikTok o video de LinkedIn: tipo de pieza y estado, con el texto de siempre para K&G."""
+    """Note for a TikTok or LinkedIn video: piece type and status; K&G keeps the standard text."""
     if not p.get("type"):
         return base
-    tipo = TIPO_ES[p["type"]]
+    tipo = p["type"]
     if p["id"] == "KN1":
-        return f"**{tipo}.** Programado en Metricool con su video terminado (aviso al teléfono, sin publicación automática): solo se propone cambiar la descripción, a la espera de tu aprobación."
-    return f"**{tipo}.** {base} Guion nuevo propuesto; si el video ya está hecho, se conserva y solo cambia la descripción."
+        return f"**{tipo}.** Scheduled in Metricool with its finished video (phone reminder, no automatic publishing): only a caption change is proposed, pending your approval."
+    return f"**{tipo}.** {base} New script proposed; if the video is already made, it is kept and only the caption changes."
 
 
 def krow(wd, m, d, hour, title, meta, tipo, extra=""):
-    """Fila de Klean N Green NYC: tipo de pieza (estrategia de tiempo recuperado) y estado en Metricool."""
+    """Klean N Green NYC row: piece type (time-back strategy) and Metricool status."""
     date = D(m, d)
     prog = (date - START).days < 14
     kind = "ref" if tipo == "TB" else "hip"
-    nota = f"**{TIPO_ES['Time back' if tipo == 'TB' else 'Tip + bridge']}.** " + (EST_PROG if prog else EST_BORR) + (" " + extra if extra else "")
+    nota = f"**{'Time back' if tipo == 'TB' else 'Tip + bridge'}.** " + (EST_PROG if prog else EST_BORR) + (" " + extra if extra else "")
     return row(wd, m, d, hour, title, meta, kind, nota)
 
 
 import linkedin_video as LV
 
-LI_ES = {
-    "LI1": "Video: cuatro datos que enviar y lo demás sale de tu lista",
-    "LI2": "Video: unidad vacía en las fiestas, cuatro cosas que hacer antes (o dejarlo en nuestras manos)",
+LI_EN = {
+    "LI1": "Video: four details to send before booking a cleaning crew",
+    "LI2": "Video: a unit that will sit empty over the holidays: four things to do first",
 }
 
 
@@ -136,10 +147,10 @@ def li(pid):
     p = next(x for x in LV.L if x["id"] == pid)
     y, m, d = (int(v) for v in p["date"].split("-"))
     wd = DAYS[dt.date(y, m, d).weekday()]
-    return row(wd, m, d, "11:00", LI_ES[pid],
-               "LinkedIn, video cuadrado de unos 30 s con presentador IA, B2B",
+    return row(wd, m, d, "11:00", LI_EN[pid],
+               "LinkedIn, square video of about 30 s with an AI presenter, B2B",
                "hip",
-               _kn_note(p, "Borrador en Metricool solo con el texto (ya incluye «AI-generated video.»): subir el video y activar subtítulos. Guion y prompts en las pestañas Week 3 y Week 4 de esta marca."))
+               _kn_note(p, "Draft in Metricool with the text only (it already includes “AI-generated video.”): upload the video and turn on captions. Script and prompts are in the Week 3 and Week 4 tabs of this brand."))
 
 
 # ---------------------------------------------------------------------------
@@ -147,83 +158,83 @@ def li(pid):
 # ---------------------------------------------------------------------------
 kg = ""
 kg += section(
-    "Semanas 1 a 4: día por día (hora de Nueva York)",
+    "Weeks 1 to 4: day by day (New York time)",
     callout(
-        "Tres publicaciones por semana, las historias del sábado y dos TikToks con presentadores IA (martes y jueves a las 18:00; en la semana 3, martes y miércoles por Thanksgiving). Los productos entre corchetes se confirman con la tienda. El ají amarillo y la chicha morada ya aparecen en publicaciones de la cuenta.",
-        "Ritmo.",
+        "Three posts per week, Saturday stories and two TikToks with AI presenters (Tuesday and Thursday at 6 PM; in week 3, Tuesday and Wednesday because of Thanksgiving). Products in brackets are confirmed with the store. Ají amarillo and chicha morada already appear in the account's posts.",
+        "Pace.",
     )
     + week_block(
         1,
         [
-            row("Lun", 11, 9, "10:00", "Llegó hoy: ají amarillo", "Facebook e Instagram, foto", "ref", "Llegó hoy. Conjunto «Producto peruano»."),
+            row("Mon", 11, 9, "10:00", "Just in: ají amarillo", "Facebook and Instagram, photo", "ref", "Just in. Set “Peruvian product”."),
             tt("KG1"),
-            row("Mié", 11, 11, "12:00", "Reel: tres usos del ají amarillo", "Facebook e Instagram, Reel de 15 a 30 s", "ref", "Cómo se usa. Conjunto «Producto peruano»."),
+            row("Wed", 11, 11, "12:00", "Reel: three ways to use ají amarillo", "Facebook and Instagram, 15 to 30 s Reel", "ref", "How to use it. Set “Peruvian product”."),
             tt("KG2"),
-            row("Vie", 11, 13, "10:00", "Quién atiende la tienda", "Facebook e Instagram, foto del equipo con su permiso", "ref", "Gente y barrio. Conjunto «Base local»."),
-            row("Sáb", 11, 14, "10:00", "Historias: tienda abierta, producto de la semana y horario", "Instagram y Facebook, 3 historias", "ref", "Información útil."),
+            row("Fri", 11, 13, "10:00", "Who runs the store", "Facebook and Instagram, team photo with their permission", "ref", "People and neighborhood. Set “Local base”."),
+            row("Sat", 11, 14, "10:00", "Stories: store open, product of the week and hours", "Instagram and Facebook, 3 stories", "ref", "Useful info."),
         ],
     )
     + week_block(
         2,
         [
-            row("Lun", 11, 16, "10:00", "Llegó hoy: [producto caribeño]", "Facebook e Instagram, foto", "ref", "Llegó hoy. Conjunto «Producto caribeño»."),
+            row("Mon", 11, 16, "10:00", "Just in: [Caribbean product]", "Facebook and Instagram, photo", "ref", "Just in. Set “Caribbean product”."),
             tt("KG3"),
-            row("Mié", 11, 18, "12:00", "Reel: [plato caribeño] con ingredientes de la tienda", "Facebook e Instagram, Reel", "ref", "Cómo se usa. Conjunto «Producto caribeño»."),
+            row("Wed", 11, 18, "12:00", "Reel: [Caribbean dish] with ingredients from the store", "Facebook and Instagram, Reel", "ref", "How to use it. Set “Caribbean product”."),
             tt("KG4"),
-            row("Vie", 11, 20, "10:00", "Aviso: pedidos y horario de Thanksgiving", "Facebook e Instagram, imagen única", "ref", "Ofertas y temporada. Conjunto «Temporada»."),
-            row("Sáb", 11, 21, "10:00", "Historias: qué hay hoy y cómo pedir con anticipación", "Instagram y Facebook, 3 historias", "ref", "Información útil."),
+            row("Fri", 11, 20, "10:00", "Notice: Thanksgiving orders and hours", "Facebook and Instagram, single image", "ref", "Offers and seasonal. Set “Seasonal”."),
+            row("Sat", 11, 21, "10:00", "Stories: what's in today and how to order ahead", "Instagram and Facebook, 3 stories", "ref", "Useful info."),
         ],
-        "Revisión 1 el viernes 20 de noviembre.",
+        "Review 1 on Friday, November 20.",
     )
     + week_block(
         3,
         [
-            row("Lun", 11, 23, "10:00", "Thanksgiving: productos para tu mesa", "Facebook e Instagram, carrusel de 3 imágenes", "ref", "Ofertas y temporada. Conjunto «Temporada»."),
+            row("Mon", 11, 23, "10:00", "Thanksgiving: products for your table", "Facebook and Instagram, 3-image carousel", "ref", "Offers and seasonal. Set “Seasonal”."),
             tt("KG5"),
-            row("Mié", 11, 25, "12:00", "Reel: [plato] para la mesa de Thanksgiving", "Facebook e Instagram, Reel", "ref", "Cómo se usa. Conjunto «Temporada»."),
+            row("Wed", 11, 25, "12:00", "Reel: [dish] for the Thanksgiving table", "Facebook and Instagram, Reel", "ref", "How to use it. Set “Seasonal”."),
             tt("KG6"),
-            row("Vie", 11, 27, "10:00", "Sábado de pequeños negocios: ven a conocernos", "Facebook e Instagram, imagen única", "ref", "Gente y barrio. Conjunto «Base local»."),
-            row("Sáb", 11, 28, "10:00", "Historias: Small Business Saturday en la tienda", "Instagram y Facebook, 3 historias", "ref", "Gente y barrio."),
+            row("Fri", 11, 27, "10:00", "Small Business Saturday: come meet us", "Facebook and Instagram, single image", "ref", "People and neighborhood. Set “Local base”."),
+            row("Sat", 11, 28, "10:00", "Stories: Small Business Saturday at the store", "Instagram and Facebook, 3 stories", "ref", "People and neighborhood."),
         ],
-        "Jueves 26 (Thanksgiving): sin publicación fija; una historia de saludo si se desea. Confirmar el horario de la tienda del jueves 26 y del viernes 27.",
+        "Thursday 26 (Thanksgiving): no fixed post; a greeting story if wanted. Confirm the store's hours for Thursday 26 and Friday 27.",
     )
     + week_block(
         4,
         [
-            row("Lun", 11, 30, "10:00", "Llegó hoy: [producto], reposición después de Thanksgiving", "Facebook e Instagram, foto", "ref", "Llegó hoy. Conjunto «Producto peruano»."),
+            row("Mon", 11, 30, "10:00", "Just in: [product], restock after Thanksgiving", "Facebook and Instagram, photo", "ref", "Just in. Set “Peruvian product”."),
             tt("KG7"),
-            row("Mié", 12, 2, "12:00", "Reel: chicha morada en casa, paso a paso", "Facebook e Instagram, Reel", "ref", "Cómo se usa. Conjunto «Bebidas y tradiciones»."),
+            row("Wed", 12, 2, "12:00", "Reel: chicha morada at home, step by step", "Facebook and Instagram, Reel", "ref", "How to use it. Set “Drinks and traditions”."),
             tt("KG8"),
-            row("Vie", 12, 4, "10:00", "Diciembre en K&G: horarios y pedidos de Navidad", "Facebook e Instagram, imagen única", "ref", "Ofertas y temporada. Conjunto «Temporada»."),
-            row("Sáb", 12, 5, "10:00", "Historias: tienda abierta y producto de la semana", "Instagram y Facebook, 3 historias", "ref", "Información útil."),
+            row("Fri", 12, 4, "10:00", "December at K&G: hours and Christmas orders", "Facebook and Instagram, single image", "ref", "Offers and seasonal. Set “Seasonal”."),
+            row("Sat", 12, 5, "10:00", "Stories: store open and product of the week", "Instagram and Facebook, 3 stories", "ref", "Useful info."),
         ],
-        "Revisión 2 el viernes 4 de diciembre. Con sus resultados se detallan las semanas 5 a 8.",
+        "Review 2 on Friday, December 4. Its results shape the detail of weeks 5 to 8.",
     ),
 )
 kg += section(
-    "Semanas 5 a 13: tema de cada semana",
-    callout("Desde la semana 5 se mantienen los dos TikToks semanales con un presentador IA distinto en cada video. Sus temas se definen en cada revisión, según lo que haya funcionado.") + wlist(
+    "Weeks 5 to 13: topic of each week",
+    callout("From week 5 the two weekly TikToks continue, with a different AI presenter in each video. Their topics are set at each review, based on what worked.") + wlist(
         [
-            wrow(5, "Mesa de Navidad, primera parte", "Producto para platos de fiestas, un Reel de un plato navideño y el aviso de horarios.", "Martes 8: feriado en Perú."),
-            wrow(6, "Pedidos y horarios de Navidad", "Fecha límite de pedidos anticipados y horarios especiales, producto por producto.", "Revisión 3 el viernes 18 de diciembre."),
-            wrow(7, "Nochebuena y Navidad", "Dos publicaciones más historias con saludo y horarios del 24 y el 25. Sin publicación fija el 25.", "Jueves 24 y viernes 25."),
-            wrow(8, "Cierre de año y Año Nuevo", "Ideas para la cena del 31, resumen del año en fotos de la tienda y saludo del 1 de enero.", "Jueves 31 y viernes 1 de enero."),
-            wrow(9, "Día de Reyes y despensa del año", "Producto de la semana, publicación de Reyes con los productos disponibles y un Reel de receta.", "Miércoles 6: Día de Reyes."),
-            wrow(10, "Platos de invierno", "Caldos y guisos con ingredientes de la tienda. Un Reel por semana, o dos si superó el umbral de 150 vistas."),
-            wrow(11, "Gente y barrio", "Clientes y recetas de la comunidad con su permiso, y la historia del equipo.", "Lunes 18: feriado federal en EE. UU.; confirmar horario."),
-            wrow(12, "Repetir lo que funcionó", "Los tres formatos con más alcance de los dos primeros meses.", "Revisión 4 el viernes 29 de enero."),
-            wrow(13, "Puente al siguiente trimestre", "Primeras piezas del plan de febrero a abril definido en la revisión 4."),
+            wrow(5, "Christmas table, part one", "Product for holiday dishes, a Reel of a Christmas dish and the hours notice.", "Tuesday 8: holiday in Peru."),
+            wrow(6, "Christmas orders and hours", "Deadline for advance orders and special hours, product by product.", "Review 3 on Friday, December 18."),
+            wrow(7, "Christmas Eve and Christmas", "Two posts plus stories with a greeting and the hours for the 24th and 25th. No fixed post on the 25th.", "Thursday 24 and Friday 25."),
+            wrow(8, "Year-end and New Year", "Ideas for the New Year's Eve dinner, a year in store photos and a January 1 greeting.", "Thursday 31 and Friday, January 1."),
+            wrow(9, "Three Kings Day and the year's pantry", "Product of the week, a Kings Day post with the available products and a recipe Reel.", "Wednesday 6: Three Kings Day."),
+            wrow(10, "Winter dishes", "Broths and stews with ingredients from the store. One Reel per week, or two if it passed the 150-view threshold."),
+            wrow(11, "People and neighborhood", "Customers and community recipes with their permission, and the team's story.", "Monday 18: US federal holiday; confirm hours."),
+            wrow(12, "Repeat what worked", "The three formats with the most reach from the first two months.", "Review 4 on Friday, January 29."),
+            wrow(13, "Bridge to the next quarter", "First pieces of the February to April plan defined at review 4."),
         ]
     ),
 )
 kg += section(
-    "Conjuntos de hashtags del calendario",
-    '<p class="lead-s">Cinco por publicación en Instagram y hasta tres en Facebook.</p>'
-    + tagbox("Base local", "#KGMarket #BrooklynEats #BrooklynFood #NYCFood")
-    + tagbox("Producto peruano", "#KGMarket #BrooklynEats #PeruvianFood #AjiAmarillo #ComidaPeruana")
-    + tagbox("Producto caribeño", "#KGMarket #BrooklynEats #CaribbeanFood #CaribbeanCuisine #BrooklynFood")
-    + tagbox("Bebidas y tradiciones", "#KGMarket #ChichaMorada #PeruvianFood #NYCFood #BrooklynFood")
-    + tagbox("Temporada", "#KGMarket #ThanksgivingFood #HolidayTable #BrooklynEats #NYCFood"),
+    "Hashtag sets used in the calendar",
+    '<p class="lead-s">Five per post on Instagram and up to three on Facebook.</p>'
+    + tagbox("Local base", "#KGMarket #BrooklynEats #BrooklynFood #NYCFood")
+    + tagbox("Peruvian product", "#KGMarket #BrooklynEats #PeruvianFood #AjiAmarillo #ComidaPeruana")
+    + tagbox("Caribbean product", "#KGMarket #BrooklynEats #CaribbeanFood #CaribbeanCuisine #BrooklynFood")
+    + tagbox("Drinks and traditions", "#KGMarket #ChichaMorada #PeruvianFood #NYCFood #BrooklynFood")
+    + tagbox("Seasonal", "#KGMarket #ThanksgivingFood #HolidayTable #BrooklynEats #NYCFood"),
 )
 
 # ---------------------------------------------------------------------------
@@ -231,147 +242,147 @@ kg += section(
 # ---------------------------------------------------------------------------
 kn = ""
 kn += section(
-    "Estrategia de contenidos: tiempo recuperado",
+    "Content strategy: time back",
     callout(
-        "Contratar a Klean N Green NYC da tiempo para hacer lo que antes no se podía. Cada pieza muestra qué puede hacer la persona con ese tiempo (unas 2 de cada 3) o es un consejo útil que termina con un puente al servicio (1 de cada 3). Ninguna promete horas ahorradas ni cuenta lo que hicieron clientes reales con su tiempo.",
-        "Mensaje central.",
+        "Hiring Klean N Green NYC gives people time to do what they couldn't before. Each piece either shows what the person can do with that time (about 2 in 3) or is a useful tip that ends with a bridge to the service (1 in 3). None promises hours saved or tells what real clients did with their time.",
+        "Core message.",
     )
     + B.tiles(
         [
-            ("25 de 38", "piezas muestran el tiempo recuperado (la mezcla ronda 2 de cada 3)", "dato"),
-            ("13 de 38", "piezas siguen como consejo y cierran con un puente al servicio", "dato"),
-            ("15", "piezas ya programadas con sus medios: solo cambia el texto", "dato"),
-            ("23", "borradores: texto nuevo y, donde cambió la idea, escenas, guiones y prompts nuevos", "dato"),
+            ("25 of 38", "pieces show the time back (the mix is about 2 in 3)", "dato"),
+            ("13 of 38", "pieces stay as tips and close with a bridge to the service", "dato"),
+            ("15", "pieces already scheduled with their media: only the text changes", "dato"),
+            ("23", "drafts: new text and, where the idea changed, new scenes, scripts and prompts", "dato"),
         ]
     )
     + callout(
-        "Nada en Metricool ha cambiado. Cuando apruebes cada pieza, se actualiza: las programadas se editan en su lugar (conservan hora y medios) y los borradores se reemplazan con el texto nuevo. Una pieza sin aprobar queda como está.",
-        "Aprobación.",
+        "Nothing in Metricool has changed. When you approve each piece, it is updated: scheduled posts are edited in place (they keep their time and media) and drafts are replaced with the new text. A piece that is not approved stays as it is.",
+        "Approval.",
     ),
 )
 kn += section(
-    "Semanas 1 a 4: día por día (hora de Nueva York)",
+    "Weeks 1 to 4: day by day (New York time)",
     callout(
-        "Plan completo de 7 días: lunes Google, martes LinkedIn, miércoles Instagram y Facebook (carrusel), jueves LinkedIn, viernes Reel, sábado imagen única en Instagram y Facebook, domingo Instagram. A eso se suman dos TikToks por semana con presentadores IA a las 18:00 (martes y jueves; en la semana 3, martes y viernes) y dos videos de LinkedIn con presentador IA, los miércoles 25 de noviembre y 2 de diciembre a las 11:00. Las semanas 1 y 2 ya están programadas con sus medios; las semanas 3 y 4 son borradores.",
-        "Ritmo.",
+        "Full 7-day plan: Monday Google, Tuesday LinkedIn, Wednesday Instagram and Facebook (carousel), Thursday LinkedIn, Friday Reel, Saturday single image on Instagram and Facebook, Sunday Instagram. On top of that, two TikToks per week with AI presenters at 6 PM (Tuesday and Thursday; in week 3, Tuesday and Friday) and two LinkedIn videos with an AI presenter, on Wednesday, November 25 and December 2 at 11 AM. Weeks 1 and 2 are already scheduled with their media; weeks 3 and 4 are drafts.",
+        "Pace.",
     )
     + week_block(
         1,
         [
-            krow("Lun", 11, 9, "10:00", "Google: ¿qué harías con tu sábado si la limpieza ya estuviera hecha?", "Perfil de Empresa de Google, publicación con botón", "TB"),
-            krow("Mar", 11, 10, "11:00", "Semana de rotación sin perseguir cuadrillas: los 5 chequeos", "LinkedIn", "TB"),
+            krow("Mon", 11, 9, "10:00", "Google: what would you do with your Saturday if the cleaning was already done?", "Google Business Profile, post with button", "TB"),
+            krow("Tue", 11, 10, "11:00", "Turnover week without chasing crews: the 5 checks", "LinkedIn", "TB"),
             tt("KN1"),
-            krow("Mié", 11, 11, "12:00", "Carrusel: la cocina en 6 puntos que se pasan por alto", "Instagram y Facebook, carrusel", "TIP", "El puente va en el texto; opcional: un noveno slide."),
-            krow("Jue", 11, 12, "11:00", "Qué incluye la limpieza de oficinas y qué libera", "LinkedIn", "TB"),
+            krow("Wed", 11, 11, "12:00", "Carousel: the kitchen in 6 spots people miss", "Instagram and Facebook, carousel", "TIP", "The bridge goes in the text; optional: a ninth slide."),
+            krow("Thu", 11, 12, "11:00", "What office cleaning includes and what it frees up", "LinkedIn", "TB"),
             tt("KN2"),
-            krow("Vie", 11, 13, "12:00", "Reel: 3 limpiezas rápidas del baño", "Instagram y Facebook, Reel de unos 12 segundos", "TIP", "El puente va en el texto."),
-            krow("Sáb", 11, 14, "11:00", "Imagen única: cuatro datos y el resto del sábado es tuyo", "Instagram y Facebook, imagen única", "TB"),
-            krow("Dom", 11, 15, "18:00", "«Sunday reset»: el texto abre con el domingo que recuperas", "Instagram, carrusel", "TB", "Las imágenes no cambian; opcional: un noveno slide."),
+            krow("Fri", 11, 13, "12:00", "Reel: 3 quick bathroom wipes", "Instagram and Facebook, Reel of about 12 seconds", "TIP", "The bridge goes in the text."),
+            krow("Sat", 11, 14, "11:00", "Single image: four details and the rest of your Saturday is yours", "Instagram and Facebook, single image", "TB"),
+            krow("Sun", 11, 15, "18:00", "“Sunday reset”: the text opens with the Sunday you get back", "Instagram, carousel", "TB", "The images don't change; optional: a ninth slide."),
         ],
     )
     + week_block(
         2,
         [
-            krow("Lun", 11, 16, "10:00", "Google: limpiezas entre inquilinos o huéspedes, con tiempo para mensajes y visitas", "Perfil de Empresa de Google, publicación con botón", "TB"),
-            krow("Mar", 11, 17, "11:00", "Verificación de una unidad: recibes fotos y visto bueno sin recorrerla", "LinkedIn", "TB"),
+            krow("Mon", 11, 16, "10:00", "Google: cleans between tenants or guests, with time for messages and showings", "Google Business Profile, post with button", "TB"),
+            krow("Tue", 11, 17, "11:00", "Verifying a unit: you get photos and sign-off without walking it", "LinkedIn", "TB"),
             tt("KN3"),
-            krow("Mié", 11, 18, "12:00", "Imagen única: invitados en camino y la casa ya está lista", "Instagram y Facebook, imagen única", "TB"),
-            krow("Jue", 11, 19, "11:00", "Reseña real de un cliente, palabra por palabra", "LinkedIn", "TB", "Solo cambia la línea que enmarca la reseña."),
+            krow("Wed", 11, 18, "12:00", "Single image: guests on their way and the home is already ready", "Instagram and Facebook, single image", "TB"),
+            krow("Thu", 11, 19, "11:00", "Real client review, word for word", "LinkedIn", "TB", "Only the line that frames the review changes."),
             tt("KN4"),
-            krow("Vie", 11, 20, "12:00", "Reel: rieles de ventanas, el punto que nadie limpia", "Instagram y Facebook, Reel de unos 12 segundos", "TIP", "El puente va en el texto."),
-            krow("Sáb", 11, 21, "11:00", "Imagen única: ¿cada cuánto limpiar? Empieza por el fin de semana que quieres", "Instagram y Facebook, imagen única", "TB"),
-            krow("Dom", 11, 22, "18:00", "Entrada y recibidor: volver a casa con todo hecho", "Instagram, carrusel", "TB", "Las imágenes no cambian; opcional: un octavo slide."),
+            krow("Fri", 11, 20, "12:00", "Reel: window tracks, the spot nobody cleans", "Instagram and Facebook, Reel of about 12 seconds", "TIP", "The bridge goes in the text."),
+            krow("Sat", 11, 21, "11:00", "Single image: how often to clean? Start from the weekend you want", "Instagram and Facebook, single image", "TB"),
+            krow("Sun", 11, 22, "18:00", "Entryway: coming home with everything done", "Instagram, carousel", "TB", "The images don't change; optional: an eighth slide."),
         ],
-        "Revisión 1 el viernes 20 de noviembre: comparar los Reels del viernes con los carruseles del miércoles.",
+        "Review 1 on Friday, November 20: compare the Friday Reels with the Wednesday carousels.",
     )
     + week_block(
         3,
         [
-            krow("Lun", 11, 23, "10:00", "Google: el equipo cierra el año, no la lista de limpieza", "Perfil de Empresa de Google, publicación con botón", "TB"),
-            krow("Mar", 11, 24, "11:00", "Checklist de oficina antes del cierre de año, con puente", "LinkedIn, carrusel en PDF", "TIP"),
+            krow("Mon", 11, 23, "10:00", "Google: the team closes the year, not the cleaning list", "Google Business Profile, post with button", "TB"),
+            krow("Tue", 11, 24, "11:00", "Office checklist before the year-end close, with a bridge", "LinkedIn, PDF carousel", "TIP"),
             tt("KN5"),
             li("LI1"),
-            krow("Mié", 11, 25, "12:00", "Carrusel: después de la cena, la cocina en 30 minutos", "Instagram y Facebook, carrusel", "TIP"),
-            krow("Jue", 11, 26, "11:00", "Thanksgiving: agradecimiento breve, un día sin nada más en la lista", "LinkedIn y Facebook", "TB"),
-            krow("Vie", 11, 27, "12:00", "Reel: se van los invitados y la tarde es tuya", "Instagram y Facebook, Reel de unos 12 segundos", "TB"),
+            krow("Wed", 11, 25, "12:00", "Carousel: after dinner, the kitchen in 30 minutes", "Instagram and Facebook, carousel", "TIP"),
+            krow("Thu", 11, 26, "11:00", "Thanksgiving: a short thank-you, a day with nothing else on the list", "LinkedIn and Facebook", "TB"),
+            krow("Fri", 11, 27, "12:00", "Reel: guests leave and the afternoon is yours", "Instagram and Facebook, Reel of about 12 seconds", "TB"),
             tt("KN6"),
-            krow("Sáb", 11, 28, "11:00", "Imagen única: ¿invitados en diciembre? La visita, no la preparación", "Instagram y Facebook, imagen única", "TB"),
-            krow("Dom", 11, 29, "18:00", "Imagen única: el domingo después del fin de semana largo es tuyo", "Instagram, imagen única", "TB"),
+            krow("Sat", 11, 28, "11:00", "Single image: guests in December? The visit, not the prep", "Instagram and Facebook, single image", "TB"),
+            krow("Sun", 11, 29, "18:00", "Single image: the Sunday after the long weekend is yours", "Instagram, single image", "TB"),
         ],
-        "El jueves 26 es Thanksgiving: sale solo el agradecimiento breve en LinkedIn y Facebook, sin TikTok. El viernes 27 vuelve el ritmo con el Reel.",
+        "Thursday 26 is Thanksgiving: only the short thank-you goes out on LinkedIn and Facebook, with no TikTok. On Friday 27 the pace returns with the Reel.",
     )
     + week_block(
         4,
         [
-            krow("Lun", 11, 30, "10:00", "Google: limpieza recurrente del hogar, fines de semana que se pueden planear", "Perfil de Empresa de Google, publicación con botón", "TB"),
-            krow("Mar", 12, 1, "11:00", "Administradores: calendario de cierre de año con la limpieza fuera de su lista", "LinkedIn", "TB"),
+            krow("Mon", 11, 30, "10:00", "Google: recurring home cleaning, weekends you can plan", "Google Business Profile, post with button", "TB"),
+            krow("Tue", 12, 1, "11:00", "Property managers: a year-end calendar with the cleaning off their list", "LinkedIn", "TB"),
             tt("KN7"),
             li("LI2"),
-            krow("Mié", 12, 2, "12:00", "Antes y después de un trabajo real: nuestro tiempo en el sitio, el tuyo intacto", "Instagram y Facebook, carrusel de 6 imágenes", "TB", "Requiere fotos reales y autorización del cliente."),
-            krow("Jue", 12, 3, "11:00", "Qué incluye la limpieza para administración de propiedades y qué devuelve", "LinkedIn, carrusel en PDF", "TB"),
+            krow("Wed", 12, 2, "12:00", "Before and after of a real job: our time on site, yours untouched", "Instagram and Facebook, 6-image carousel", "TB", "Requires real photos and client authorization."),
+            krow("Thu", 12, 3, "11:00", "What cleaning for property management includes and what it gives back", "LinkedIn, PDF carousel", "TB"),
             tt("KN8"),
-            krow("Vie", 12, 4, "12:00", "Reel: los puntos que todos tocan, antes de las visitas, con puente", "Instagram y Facebook, Reel de unos 12 segundos", "TIP"),
-            krow("Sáb", 12, 5, "11:00", "Imagen única: los fines de semana de enero que querías", "Instagram y Facebook, imagen única", "TB"),
-            krow("Dom", 12, 6, "18:00", "Reel: la entrada en invierno ya resuelta y la noche tuya", "Instagram, Reel de unos 12 segundos", "TB"),
+            krow("Fri", 12, 4, "12:00", "Reel: the spots everyone touches, before the visits, with a bridge", "Instagram and Facebook, Reel of about 12 seconds", "TIP"),
+            krow("Sat", 12, 5, "11:00", "Single image: the January weekends you wanted", "Instagram and Facebook, single image", "TB"),
+            krow("Sun", 12, 6, "18:00", "Reel: the winter entryway already handled and the evening yours", "Instagram, Reel of about 12 seconds", "TB"),
         ],
-        "Revisión 2 el viernes 4 de diciembre. Con sus resultados se detallan las semanas 5 a 8.",
+        "Review 2 on Friday, December 4. Its results shape the detail of weeks 5 to 8.",
     ),
 )
 kn += section(
-    "Semanas 5 a 13: tema de cada semana",
-    callout("Desde la semana 5 se mantienen el Reel del viernes y la imagen única del sábado. Sus temas se definen en cada revisión, según lo que haya funcionado. Los dos TikToks semanales siguen con un presentador IA distinto en cada video.") + wlist(
+    "Weeks 5 to 13: topic of each week",
+    callout("From week 5 the Friday Reel and the Saturday single image continue. Their topics are set at each review, based on what worked. The two weekly TikToks continue with a different AI presenter in each video.") + wlist(
         [
-            wrow(5, "Antes y después de las fiestas", "Checklist para recibir invitados y checklist del día siguiente para hogares; en LinkedIn, la oficina en la última semana del año."),
-            wrow(6, "Cierre de año para oficinas y edificios", "Limpieza profunda antes del receso e invitación a reservar fechas de enero con una sola acción: pedir presupuesto.", "Revisión 3 el viernes 18 de diciembre."),
-            wrow(7, "Semana baja", "Dos piezas: LinkedIn el martes 22 con agradecimiento y horarios de fin de año, e Instagram el domingo 27 con «Sunday reset» posfiestas.", "Sin publicación el jueves 24 ni el viernes 25."),
-            wrow(8, "Reset de año nuevo", "LinkedIn el martes 29: la oficina lista antes de que vuelva el equipo. Instagram el miércoles 30 y el domingo 3 de enero: «New year reset» para hogares.", "Jueves 31 y viernes 1 de enero."),
-            wrow(9, "Vuelta a la oficina", "Dos publicaciones en LinkedIn (martes 5 y jueves 7), Instagram y Facebook el miércoles 6 y Instagram el domingo 10."),
-            wrow(10, "Prueba social", "Reseñas y trabajos reales con autorización, en LinkedIn e Instagram."),
-            wrow(11, "Educación para administradores", "Mantenimiento trimestral de unidades y áreas comunes, en tres pasos.", "Lunes 18: feriado federal en EE. UU.; oficinas cerradas. Publicar el martes 19."),
-            wrow(12, "Repetir lo que funcionó", "Los formatos y temas con más impresiones de los dos primeros meses, en versión nueva.", "Revisión 4 el viernes 29 de enero."),
-            wrow(13, "Puente al siguiente trimestre", "Primeras piezas del plan de febrero a abril, con preparación de la limpieza de primavera."),
+            wrow(5, "Before and after the holidays", "Checklist for hosting guests and a next-day checklist for homes; on LinkedIn, the office in the last week of the year."),
+            wrow(6, "Year-end for offices and buildings", "Deep clean before the break and an invitation to book January dates with a single action: request an estimate.", "Review 3 on Friday, December 18."),
+            wrow(7, "Low week", "Two pieces: LinkedIn on Tuesday 22 with a thank-you and year-end hours, and Instagram on Sunday 27 with a post-holiday “Sunday reset”.", "No post on Thursday 24 or Friday 25."),
+            wrow(8, "New year reset", "LinkedIn on Tuesday 29: the office ready before the team returns. Instagram on Wednesday 30 and Sunday, January 3: “New year reset” for homes.", "Thursday 31 and Friday, January 1."),
+            wrow(9, "Back to the office", "Two LinkedIn posts (Tuesday 5 and Thursday 7), Instagram and Facebook on Wednesday 6 and Instagram on Sunday 10."),
+            wrow(10, "Social proof", "Reviews and real jobs with authorization, on LinkedIn and Instagram."),
+            wrow(11, "Education for property managers", "Quarterly upkeep of units and common areas, in three steps.", "Monday 18: US federal holiday; offices closed. Post on Tuesday 19."),
+            wrow(12, "Repeat what worked", "The formats and topics with the most impressions from the first two months, in a new version.", "Review 4 on Friday, January 29."),
+            wrow(13, "Bridge to the next quarter", "First pieces of the February to April plan, with spring-cleaning prep."),
         ]
     ),
 )
 kn += section(
-    "Blog en kleannyc.com",
+    "Blog on kleannyc.com",
     callout(
-        "El blog del sitio ya existe, pero está detenido. Se retoma con un artículo cada dos semanas, cada uno sobre una sola búsqueda concreta y con un botón final para pedir presupuesto. Los posts de LinkedIn enlazan al artículo en lugar de a la página de contacto cuando haya uno relacionado. El efecto en Google tarda meses y no está garantizado.",
-        "Propuesta.",
+        "The site's blog exists but has stalled. It restarts with one article every two weeks, each on a single concrete search and with a closing button to request an estimate. LinkedIn posts link to the article instead of the contact page when there is a related one. The effect on Google takes months and is not guaranteed.",
+        "Proposal.",
     )
-    + '<div class="tablewrap"><table class="rev"><thead><tr><th>Publicar</th><th>Artículo</th><th>Enlaza desde</th></tr></thead><tbody>'
-    "<tr><th scope='row'>Vie 20 nov (S2)</th><td>Checklist de oficina antes del cierre de año</td><td>LinkedIn, martes 24 de noviembre</td></tr>"
-    "<tr><th scope='row'>Mié 2 dic (S4)</th><td>Qué incluye la limpieza para administración de propiedades</td><td>LinkedIn, jueves 3 de diciembre</td></tr>"
-    "<tr><th scope='row'>Semana 6</th><td>Cómo se verifica una unidad antes de entregarla</td><td>LinkedIn y Google</td></tr>"
-    "<tr><th scope='row'>Semana 8</th><td>Checklist de turnover para administradores</td><td>LinkedIn</td></tr>"
+    + '<div class="tablewrap"><table class="rev"><thead><tr><th>Publish</th><th>Article</th><th>Linked from</th></tr></thead><tbody>'
+    "<tr><th scope='row'>Fri Nov 20 (W2)</th><td>Office checklist before the year-end close</td><td>LinkedIn, Tuesday, November 24</td></tr>"
+    "<tr><th scope='row'>Wed Dec 2 (W4)</th><td>What cleaning for property management includes</td><td>LinkedIn, Thursday, December 3</td></tr>"
+    "<tr><th scope='row'>Week 6</th><td>How a unit is verified before handover</td><td>LinkedIn and Google</td></tr>"
+    "<tr><th scope='row'>Week 8</th><td>Turnover checklist for property managers</td><td>LinkedIn</td></tr>"
     "</tbody></table></div>"
-    '<p class="note">Los borradores de LinkedIn del 24 de noviembre y el 3 de diciembre apuntan hoy a la página de contacto con parámetros UTM. Si el artículo está publicado a tiempo, se cambia el enlace; si no, se mantienen.</p>'
+    '<p class="note">The LinkedIn drafts for November 24 and December 3 currently point to the contact page with UTM parameters. If the article is published in time, the link is changed; if not, they stay as they are.</p>'
     '<ul class="rules">'
-    "<li><b>Antes de publicar.</b> Corregir el bloqueo inválido de robots.txt y las páginas duplicadas /dtut/ y /new-clients/ señalados en la evaluación SEO.</li>"
-    "<li><b>Cada artículo.</b> Una sola pregunta, un título claro, una imagen destacada y el botón final de pedir presupuesto con parámetros UTM.</li></ul>",
+    "<li><b>Before publishing.</b> Fix the invalid robots.txt block and the duplicate pages /dtut/ and /new-clients/ flagged in the SEO assessment.</li>"
+    "<li><b>Each article.</b> A single question, a clear title, a featured image and the closing button to request an estimate with UTM parameters.</li></ul>",
 )
 kn += section(
-    "Imágenes destacadas del sitio",
+    "Featured images for the site",
     callout(
-        "Una imagen realista por página, en formato horizontal 1.91:1 y sin texto. Sirve de imagen destacada y de tarjeta de vista previa en LinkedIn, Facebook y Google. Los prompts están en el archivo klean-nyc-imagenes-web.html. Son imágenes generadas e ilustrativas: reemplazarlas por fotos reales del equipo o de un trabajo cuando existan.",
-        "Qué es.",
+        "One realistic image per page, in 1.91:1 horizontal format and without text. It serves as the featured image and as the preview card on LinkedIn, Facebook and Google. The prompts are in the file klean-nyc-imagenes-web.html. They are generated, illustrative images: replace them with real photos of the team or a job when they exist.",
+        "What it is.",
     )
-    + '<div class="tablewrap"><table class="rev"><thead><tr><th>Antes de</th><th>Imagen</th><th>Archivo sugerido</th></tr></thead><tbody>'
-    "<tr><th scope='row'>Lun 9 nov</th><td>Contacto, destino de los botones de Google y de los enlaces de LinkedIn y Facebook</td><td>klean-nyc-contact.jpg</td></tr>"
-    "<tr><th scope='row'>Lun 16 nov</th><td>Alquileres vacacionales, destino del botón de Google</td><td>klean-nyc-vacation-rental-cleaning.jpg</td></tr>"
-    "<tr><th scope='row'>Semana 1</th><td>Home</td><td>klean-nyc-home.jpg</td></tr>"
-    "<tr><th scope='row'>Semana 2</th><td>Limpieza residencial, oficinas, administración de propiedades y post-construcción (las páginas que existan)</td><td>klean-nyc-residential-cleaning.jpg y las demás</td></tr>"
-    "<tr><th scope='row'>Antes del primer artículo</th><td>Índice del blog</td><td>klean-nyc-blog.jpg</td></tr>"
+    + '<div class="tablewrap"><table class="rev"><thead><tr><th>Before</th><th>Image</th><th>Suggested file</th></tr></thead><tbody>'
+    "<tr><th scope='row'>Mon Nov 9</th><td>Contact, destination of the Google buttons and of the LinkedIn and Facebook links</td><td>klean-nyc-contact.jpg</td></tr>"
+    "<tr><th scope='row'>Mon Nov 16</th><td>Vacation rentals, destination of the Google button</td><td>klean-nyc-vacation-rental-cleaning.jpg</td></tr>"
+    "<tr><th scope='row'>Week 1</th><td>Home</td><td>klean-nyc-home.jpg</td></tr>"
+    "<tr><th scope='row'>Week 2</th><td>Residential cleaning, offices, property management and post-construction (the pages that exist)</td><td>klean-nyc-residential-cleaning.jpg and the others</td></tr>"
+    "<tr><th scope='row'>Before the first article</th><td>Blog index</td><td>klean-nyc-blog.jpg</td></tr>"
     "</tbody></table></div>",
 )
 kn += section(
-    "Conjuntos de hashtags del calendario",
-    '<p class="lead-s">Tres en LinkedIn, cinco en Instagram y hasta tres en Facebook.</p>'
-    + tagbox("LinkedIn, administración de propiedades", "#NYCCleaning #PropertyManagement #CommercialCleaning")
-    + tagbox("LinkedIn, oficinas", "#NYCCleaning #OfficeCleaning #FacilitiesManagement")
-    + tagbox("Instagram, hogares", "#NYCCleaning #ResidentialCleaning #CleaningTips #ApartmentCleaning #SundayReset")
+    "Hashtag sets used in the calendar",
+    '<p class="lead-s">Three on LinkedIn, five on Instagram and up to three on Facebook.</p>'
+    + tagbox("LinkedIn, property management", "#NYCCleaning #PropertyManagement #CommercialCleaning")
+    + tagbox("LinkedIn, offices", "#NYCCleaning #OfficeCleaning #FacilitiesManagement")
+    + tagbox("Instagram, homes", "#NYCCleaning #ResidentialCleaning #CleaningTips #ApartmentCleaning #SundayReset")
     + tagbox("Instagram, Reels", "#NYCCleaning #CleaningTips #ApartmentCleaning #SatisfyingClean #CleaningReel")
-    + tagbox("Instagram, sábados", "#NYCCleaning #ResidentialCleaning #CleaningService #ApartmentCleaning #NYCHome")
+    + tagbox("Instagram, Saturdays", "#NYCCleaning #ResidentialCleaning #CleaningService #ApartmentCleaning #NYCHome")
     + tagbox("Facebook", "#NYCCleaning #ResidentialCleaning #CleaningTips"),
 )
 
@@ -380,50 +391,50 @@ kn += section(
 # ---------------------------------------------------------------------------
 jd = ""
 jd += section(
-    "Semanas 1 a 4: día por día (hora de Nueva York)",
+    "Weeks 1 to 4: day by day (New York time)",
     callout(
-        "Si las cuatro definiciones no están cerradas el viernes 13 de noviembre, todo el calendario se corre una semana. Los temas entre corchetes se completan cuando se confirme la actividad.",
-        "Condición.",
+        "If the four definitions are not settled by Friday, November 13, the whole calendar shifts one week. Topics in brackets are filled in once the activity is confirmed.",
+        "Condition.",
     )
-    + '<h4 class="wkh">Semana 1<span>' + e(week_range(1)) + "</span></h4>"
-    + '<p class="note">Sin publicaciones. Cerrar las cuatro definiciones (qué ofrece y a quién, dónde llega el público, quién habla y qué límites tienen los textos) y completar el perfil el viernes 13.</p>'
+    + '<h4 class="wkh">Week 1<span>' + e(week_range(1)) + "</span></h4>"
+    + '<p class="note">No posts. Settle the four definitions (what it offers and to whom, where the audience is reached, who speaks and what limits the texts have) and complete the profile on Friday 13.</p>'
     + week_block(
         2,
         [
-            row("Mar", 11, 17, "11:00", "Perspectiva del sector n.º 1", "LinkedIn", "ref", "Perspectiva del sector."),
-            row("Jue", 11, 19, "11:00", "Cómo trabajamos n.º 1", "LinkedIn", "ref", "Cómo trabajamos."),
+            row("Tue", 11, 17, "11:00", "Industry perspective #1", "LinkedIn", "ref", "Industry perspective."),
+            row("Thu", 11, 19, "11:00", "How we work #1", "LinkedIn", "ref", "How we work."),
         ],
-        "Revisión 1 el viernes 20 de noviembre.",
+        "Review 1 on Friday, November 20.",
     )
     + week_block(
         3,
         [
-            row("Mar", 11, 24, "11:00", "Pregunta frecuente n.º 1", "LinkedIn", "ref", "Preguntas frecuentes."),
-            row("Mié", 11, 25, "11:00", "Perspectiva del sector n.º 2", "LinkedIn", "ref", "Se adelanta al miércoles por Thanksgiving. En la referencia de Metricool, el miércoles a las 11:00 supera al martes."),
+            row("Tue", 11, 24, "11:00", "FAQ #1", "LinkedIn", "ref", "Frequently asked questions."),
+            row("Wed", 11, 25, "11:00", "Industry perspective #2", "LinkedIn", "ref", "Moved up to Wednesday because of Thanksgiving. In the Metricool reference, Wednesday at 11 AM beats Tuesday."),
         ],
     )
     + week_block(
         4,
         [
-            row("Mar", 12, 1, "11:00", "Cómo trabajamos n.º 2", "LinkedIn", "ref", "Cómo trabajamos."),
-            row("Jue", 12, 3, "11:00", "Equipo: presentación de [persona]", "LinkedIn", "ref", "Equipo."),
+            row("Tue", 12, 1, "11:00", "How we work #2", "LinkedIn", "ref", "How we work."),
+            row("Thu", 12, 3, "11:00", "Team: introducing [person]", "LinkedIn", "ref", "Team."),
         ],
-        "Revisión 2 el viernes 4 de diciembre.",
+        "Review 2 on Friday, December 4.",
     ),
 )
 jd += section(
-    "Semanas 5 a 13: tema de cada semana",
+    "Weeks 5 to 13: topic of each week",
     wlist(
         [
-            wrow(5, "Perspectiva y preguntas frecuentes", "Martes: perspectiva del sector. Jueves: pregunta frecuente."),
-            wrow(6, "Cómo trabajamos y equipo", "Martes: proceso. Jueves: equipo.", "Revisión 3 el viernes 18 de diciembre."),
-            wrow(7, "Semana baja", "Una publicación el martes 22 con saludo de fin de año.", "Sin publicación el jueves 24 ni el viernes 25."),
-            wrow(8, "Mirada al nuevo año", "Una publicación el martes 29 sobre qué mirar en 2027, sin promesas de resultado.", "Jueves 31 y viernes 1 de enero."),
-            wrow(9, "Reanudar el ritmo", "Martes 5: perspectiva del sector. Jueves 7: pregunta frecuente."),
-            wrow(10, "Cómo trabajamos y equipo", "Martes: proceso. Jueves: equipo."),
-            wrow(11, "Perspectiva y preguntas frecuentes", "Martes 19: perspectiva. Jueves 21: pregunta frecuente.", "Lunes 18: feriado federal en EE. UU."),
-            wrow(12, "Repetir lo que funcionó", "Los temas con más impresiones, en versión nueva.", "Revisión 4 el viernes 29 de enero."),
-            wrow(13, "Puente al siguiente trimestre", "Primeras piezas del plan de febrero a abril."),
+            wrow(5, "Perspective and FAQs", "Tuesday: industry perspective. Thursday: FAQ."),
+            wrow(6, "How we work and team", "Tuesday: process. Thursday: team.", "Review 3 on Friday, December 18."),
+            wrow(7, "Low week", "One post on Tuesday 22 with a year-end greeting.", "No post on Thursday 24 or Friday 25."),
+            wrow(8, "Looking at the new year", "One post on Tuesday 29 about what to watch in 2027, without promising results.", "Thursday 31 and Friday, January 1."),
+            wrow(9, "Back to the pace", "Tuesday 5: industry perspective. Thursday 7: FAQ."),
+            wrow(10, "How we work and team", "Tuesday: process. Thursday: team."),
+            wrow(11, "Perspective and FAQs", "Tuesday 19: perspective. Thursday 21: FAQ.", "Monday 18: US federal holiday."),
+            wrow(12, "Repeat what worked", "The topics with the most impressions, in a new version.", "Review 4 on Friday, January 29."),
+            wrow(13, "Bridge to the next quarter", "First pieces of the February to April plan."),
         ]
     ),
 )
@@ -433,133 +444,133 @@ jd += section(
 # ---------------------------------------------------------------------------
 pe = ""
 pe += section(
-    "Semanas 1 a 4: día por día (hora de Lima)",
+    "Weeks 1 to 4: day by day (Lima time)",
     callout(
-        "Todos los horarios son hipótesis y se reemplazan por el mejor horario de la cuenta cuando haya datos. Si la red no está conectada el 20 de noviembre, la publicación se corre una semana.",
-        "Condición.",
+        "All times are hypotheses and are replaced by the account's best time once there is data. If the network is not connected by November 20, posting shifts one week.",
+        "Condition.",
     )
-    + '<h4 class="wkh">Semana 1<span>' + e(week_range(1)) + "</span></h4>"
-    + '<p class="note">Sin publicaciones. Cerrar las cuatro decisiones previas (marca, segmento inicial, red de partida y servicios con zonas) el viernes 13.</p>'
-    + '<h4 class="wkh">Semana 2<span>' + e(week_range(2)) + "</span></h4>"
-    + '<p class="note">Sin publicaciones. Crear y completar el perfil de Instagram y el Perfil de Empresa de Google, y conectar Instagram a Metricool. Revisión 1 el viernes 20 de noviembre.</p>'
+    + '<h4 class="wkh">Week 1<span>' + e(week_range(1)) + "</span></h4>"
+    + '<p class="note">No posts. Settle the four prior decisions (brand, starting segment, starting network and services with service areas) on Friday 13.</p>'
+    + '<h4 class="wkh">Week 2<span>' + e(week_range(2)) + "</span></h4>"
+    + '<p class="note">No posts. Create and complete the Instagram profile and the Google Business Profile, and connect Instagram to Metricool. Review 1 on Friday, November 20.</p>'
     + week_block(
         3,
         [
-            row("Lun", 11, 23, "12:00", "Presentación del servicio: qué incluye y en qué zonas", "Instagram, carrusel", "hip", "Presentación del servicio."),
-            row("Mié", 11, 25, "19:00", "Guía de limpieza: [tema]", "Instagram, carrusel", "hip", "Guías de limpieza."),
-            row("Vie", 11, 27, "12:00", "Antes y después, o reseña si aún no hay trabajos publicables", "Instagram, carrusel o imagen única", "hip", "Antes y después o reseñas."),
+            row("Mon", 11, 23, "12:00", "Service introduction: what it includes and in which areas", "Instagram, carousel", "hip", "Service introduction."),
+            row("Wed", 11, 25, "19:00", "Cleaning guide: [topic]", "Instagram, carousel", "hip", "Cleaning guides."),
+            row("Fri", 11, 27, "12:00", "Before and after, or a review if there are no publishable jobs yet", "Instagram, carousel or single image", "hip", "Before and after or reviews."),
         ],
     )
     + week_block(
         4,
         [
-            row("Lun", 11, 30, "12:00", "Servicios por tipo de cliente", "Instagram, carrusel", "hip", "Presentación del servicio."),
-            row("Mié", 12, 2, "19:00", "Guía de limpieza: [tema 2]", "Instagram, Reel o carrusel", "hip", "Guías de limpieza."),
-            row("Vie", 12, 4, "12:00", "Antes y después, o reseña", "Instagram, carrusel o imagen única", "hip", "Antes y después o reseñas."),
+            row("Mon", 11, 30, "12:00", "Services by client type", "Instagram, carousel", "hip", "Service introduction."),
+            row("Wed", 12, 2, "19:00", "Cleaning guide: [topic 2]", "Instagram, Reel or carousel", "hip", "Cleaning guides."),
+            row("Fri", 12, 4, "12:00", "Before and after, or a review", "Instagram, carousel or single image", "hip", "Before and after or reviews."),
         ],
-        "Revisión 2 el viernes 4 de diciembre.",
+        "Review 2 on Friday, December 4.",
     ),
 )
 pe += section(
-    "Semanas 5 a 13: tema de cada semana",
+    "Weeks 5 to 13: topic of each week",
     wlist(
         [
-            wrow(5, "Casa lista para las fiestas", "Checklist para recibir visitas en Navidad y Año Nuevo.", "Martes 8: feriado en Perú (no cae en lunes, miércoles ni viernes)."),
-            wrow(6, "Oficinas: cierre de año", "Limpieza antes del receso e invitación a reservar fechas de enero.", "Revisión 3 el viernes 18 de diciembre."),
-            wrow(7, "Navidad", "Dos publicaciones (lunes 21 y miércoles 23) con saludo y horarios.", "Sin publicación el viernes 25."),
-            wrow(8, "Año Nuevo", "Lunes 28 y miércoles 30: checklist posfiestas y saludo.", "Sin publicación el viernes 1 de enero."),
-            wrow(9, "Verano: al volver de vacaciones", "Limpieza de casas y oficinas después del receso, en tres pasos."),
-            wrow(10, "Antes y después", "Trabajos reales con autorización."),
-            wrow(11, "Reseñas", "Texto exacto de cada reseña, con permiso."),
-            wrow(12, "Repetir lo que funcionó", "Los formatos con más alcance de las primeras semanas de datos.", "Revisión 4 el viernes 29 de enero."),
-            wrow(13, "Puente al siguiente trimestre", "Primeras piezas del plan de febrero a abril."),
+            wrow(5, "Home ready for the holidays", "Checklist for hosting visitors at Christmas and New Year.", "Tuesday 8: holiday in Peru (it doesn't fall on a Monday, Wednesday or Friday)."),
+            wrow(6, "Offices: year-end", "Cleaning before the break and an invitation to book January dates.", "Review 3 on Friday, December 18."),
+            wrow(7, "Christmas", "Two posts (Monday 21 and Wednesday 23) with a greeting and hours.", "No post on Friday 25."),
+            wrow(8, "New Year", "Monday 28 and Wednesday 30: post-holiday checklist and greeting.", "No post on Friday, January 1."),
+            wrow(9, "Summer: back from vacation", "Cleaning homes and offices after the break, in three steps."),
+            wrow(10, "Before and after", "Real jobs with authorization."),
+            wrow(11, "Reviews", "Exact text of each review, with permission."),
+            wrow(12, "Repeat what worked", "The formats with the most reach from the first weeks of data.", "Review 4 on Friday, January 29."),
+            wrow(13, "Bridge to the next quarter", "First pieces of the February to April plan."),
         ]
     ),
 )
 
 # ---------------------------------------------------------------------------
-# RESUMEN
+# SUMMARY
 # ---------------------------------------------------------------------------
 rs = ""
 rs += section(
-    "Cómo está armado",
+    "How it is built",
     callout(
-        "Las cuatro primeras semanas se detallan día por día porque ya hay datos de partida. Las otras nueve se planifican por tema. En cada revisión se consulta Metricool, se compara con la línea base y se detalla el siguiente bloque. Planificar las 13 semanas pieza por pieza sería adelantarse a datos que todavía no existen.",
+        "The first four weeks are detailed day by day because there is already starting data. The other nine are planned by topic. At each review Metricool is checked, compared against the baseline, and the next block is detailed. Planning all 13 weeks piece by piece would get ahead of data that doesn't exist yet.",
     )
     + '<div class="cards">'
-    '<article class="card"><h4>Base · semanas 1 a 4</h4><p>9 de noviembre al 6 de diciembre. Instalar el ritmo, ordenar la identidad de cada marca y medir. Incluye Thanksgiving.</p></article>'
-    '<article class="card"><h4>Temporada · semanas 5 a 8</h4><p>7 de diciembre al 3 de enero. Navidad, fin de año y Año Nuevo, con una semana baja.</p></article>'
-    '<article class="card"><h4>Consolidación · semanas 9 a 13</h4><p>4 de enero al 7 de febrero. Repetir lo que funcionó y preparar el siguiente trimestre.</p></article>'
+    '<article class="card"><h4>Base · weeks 1 to 4</h4><p>November 9 to December 6. Set the pace, organize each brand\'s identity and measure. Includes Thanksgiving.</p></article>'
+    '<article class="card"><h4>Season · weeks 5 to 8</h4><p>December 7 to January 3. Christmas, year-end and New Year, with one low week.</p></article>'
+    '<article class="card"><h4>Consolidation · weeks 9 to 13</h4><p>January 4 to February 7. Repeat what worked and prepare the next quarter.</p></article>'
     "</div>",
 )
 rs += section(
-    "Las 13 semanas",
+    "The 13 weeks",
     wlist(
         [
-            wrow(1, "Primera semana de publicación", "K&G Market y Klean N Green NYC empiezan. JDET Capital y Klean N Green Perú cierran definiciones."),
-            wrow(2, "Primeras señales", "Entran JDET Capital en LinkedIn y el perfil de Klean N Green Perú.", "Revisión 1 el viernes 20 de noviembre."),
-            wrow(3, "Thanksgiving", "Semana corta para Klean N Green NYC y JDET Capital. Klean N Green Perú empieza a publicar.", "Jueves 26 Thanksgiving, viernes 27 Black Friday, sábado 28 Small Business Saturday."),
-            wrow(4, "Cierre de la base", "Cuatro semanas contra la línea base.", "Revisión 2 el viernes 4 de diciembre."),
-            wrow(5, "Mesa de Navidad y fiestas", "Contenido de temporada en las cuatro marcas.", "Martes 8: feriado en Perú."),
-            wrow(6, "Pedidos y cierre de año", "Fechas límite de pedidos y reservas de enero.", "Revisión 3 el viernes 18 de diciembre."),
-            wrow(7, "Semana baja", "Menos piezas y más historias con saludos y horarios.", "Jueves 24 y viernes 25."),
-            wrow(8, "Año Nuevo", "Reset de año nuevo y mirada a 2027.", "Jueves 31 y viernes 1 de enero."),
-            wrow(9, "Vuelta al ritmo", "Reanudar el ritmo completo.", "Miércoles 6: Día de Reyes (K&G Market)."),
-            wrow(10, "Platos de invierno y prueba social", "Contenido de invierno y reseñas."),
-            wrow(11, "Gente, barrio y educación", "Comunidad en K&G Market y educación para administradores en Klean N Green NYC.", "Lunes 18: feriado federal en EE. UU."),
-            wrow(12, "Repetir lo que funcionó", "Formatos y temas con más alcance.", "Revisión 4 el viernes 29 de enero."),
-            wrow(13, "Puente al siguiente trimestre", "Primeras piezas del plan de febrero a abril."),
+            wrow(1, "First week of posting", "K&G Market and Klean N Green NYC start. JDET Capital and Klean N Green Peru settle their definitions."),
+            wrow(2, "First signals", "JDET Capital starts on LinkedIn and the Klean N Green Peru profile comes in.", "Review 1 on Friday, November 20."),
+            wrow(3, "Thanksgiving", "Short week for Klean N Green NYC and JDET Capital. Klean N Green Peru starts posting.", "Thursday 26 Thanksgiving, Friday 27 Black Friday, Saturday 28 Small Business Saturday."),
+            wrow(4, "Close of the base", "Four weeks against the baseline.", "Review 2 on Friday, December 4."),
+            wrow(5, "Christmas table and holidays", "Seasonal content on all four brands.", "Tuesday 8: holiday in Peru."),
+            wrow(6, "Orders and year-end", "Order deadlines and January bookings.", "Review 3 on Friday, December 18."),
+            wrow(7, "Low week", "Fewer pieces and more stories with greetings and hours.", "Thursday 24 and Friday 25."),
+            wrow(8, "New Year", "New-year reset and a look at 2027.", "Thursday 31 and Friday, January 1."),
+            wrow(9, "Back to the pace", "Resume the full pace.", "Wednesday 6: Three Kings Day (K&G Market)."),
+            wrow(10, "Winter dishes and social proof", "Winter content and reviews."),
+            wrow(11, "People, neighborhood and education", "Community at K&G Market and education for property managers at Klean N Green NYC.", "Monday 18: US federal holiday."),
+            wrow(12, "Repeat what worked", "Formats and topics with the most reach.", "Review 4 on Friday, January 29."),
+            wrow(13, "Bridge to the next quarter", "First pieces of the February to April plan."),
         ]
     ),
 )
 rev = [
-    ("Vie 20 nov", "Cumplimiento del ritmo, impresiones por publicación y primeras lecturas de formato y hora.", "Ajustar horarios. Mantener el plan o bajar al mínimo."),
-    ("Vie 4 dic", "Cuatro semanas contra la línea base: seguidores, impresiones, Reel, clics en Google y LinkedIn.", "Resultado de la ventana de Instagram, formatos a repetir y detalle de las semanas 5 a 8."),
-    ("Vie 18 dic", "Temporada de fiestas: alcance y mensajes.", "Detalle de enero (semanas 9 a 12) y ritmo de la semana baja."),
-    ("Vie 29 ene", "Trimestre completo contra las metas propuestas.", "Plan de febrero a abril."),
+    ("Fri Nov 20", "Pace compliance, impressions per post and first readings on format and time.", "Adjust times. Keep the plan or drop to the minimum."),
+    ("Fri Dec 4", "Four weeks against the baseline: followers, impressions, Reel, Google clicks and LinkedIn.", "Result of the Instagram window, formats to repeat and the detail of weeks 5 to 8."),
+    ("Fri Dec 18", "Holiday season: reach and messages.", "January detail (weeks 9 to 12) and the pace of the low week."),
+    ("Fri Jan 29", "Full quarter against the proposed targets.", "February to April plan."),
 ]
 rev_rows = "".join(
     f"<tr><th scope='row'>{e(a)}</th><td>{e(b)}</td><td>{e(c)}</td></tr>" for a, b, c in rev
 )
 rs += section(
-    "Puntos de revisión",
-    '<div class="tablewrap"><table class="rev"><thead><tr><th>Fecha</th><th>Qué se revisa</th><th>Qué se decide</th></tr></thead>'
+    "Review points",
+    '<div class="tablewrap"><table class="rev"><thead><tr><th>Date</th><th>What is reviewed</th><th>What is decided</th></tr></thead>'
     f"<tbody>{rev_rows}</tbody></table></div>"
-    '<p class="note">En cada fecha basta con pedir la revisión: se consultan los datos de Metricool y se actualiza este calendario.</p>',
+    '<p class="note">On each date it is enough to ask for the review: Metricool data is checked and this calendar is updated.</p>',
 )
 rs += section(
-    "Reglas de ajuste",
-    '<p class="lead-s">Umbrales propuestos, para confirmar con los primeros datos.</p>'
+    "Adjustment rules",
+    '<p class="lead-s">Proposed thresholds, to confirm with the first data.</p>'
     '<ul class="rules">'
-    "<li><b>Reel de K&amp;G Market.</b> Si supera 150 vistas dos semanas seguidas, pasar de uno a dos Reels por semana.</li>"
-    "<li><b>Reels de Klean N Green NYC.</b> En la revisión 1 se comparan con los carruseles del miércoles. Si tienen menos alcance, el viernes pasa a imagen única.</li>"
-    "<li><b>Horario de Instagram.</b> Si la ventana de 18:00 a 20:00 supera en impresiones a la de 10:00 a 12:00 durante dos semanas, mover Instagram a la tarde.</li>"
-    "<li><b>LinkedIn con buen resultado.</b> Si una publicación supera 50 impresiones, repetir el tema con otro formato en las dos semanas siguientes.</li>"
-    "<li><b>LinkedIn con bajo alcance.</b> Si sigue bajo 15 impresiones por publicación tras cuatro semanas, reforzar conexiones y compartidos desde perfiles personales antes de aumentar el ritmo.</li>"
-    "<li><b>TikTok.</b> Las cuentas son nuevas y no hay datos propios: los horarios de martes y jueves a las 18:00 vienen de la referencia general de Metricool. En la revisión 1 se comparan vistas y reproducción completa entre martes y jueves y entre temas; se repite el tipo de tema que supere a los demás y se mueve el horario si otra franja rinde más.</li>"
-    "<li><b>Capacidad del equipo.</b> Si se cumple menos del 80% de lo programado dos semanas seguidas, volver al plan mínimo.</li></ul>",
+    "<li><b>K&amp;G Market Reel.</b> If it exceeds 150 views two weeks in a row, go from one Reel to two per week.</li>"
+    "<li><b>Klean N Green NYC Reels.</b> At review 1 they are compared with the Wednesday carousels. If they have less reach, Friday becomes a single image.</li>"
+    "<li><b>Instagram time.</b> If the 6 PM to 8 PM window beats the 10 AM to 12 PM window in impressions for two weeks, move Instagram to the evening.</li>"
+    "<li><b>LinkedIn doing well.</b> If a post exceeds 50 impressions, repeat the topic in another format over the next two weeks.</li>"
+    "<li><b>LinkedIn with low reach.</b> If it stays under 15 impressions per post after four weeks, strengthen connections and shares from personal profiles before increasing the pace.</li>"
+    "<li><b>TikTok.</b> The accounts are new and there is no data of their own: the Tuesday and Thursday 6 PM times come from Metricool's general reference. At review 1, views and full plays are compared between Tuesday and Thursday and between topics; the type of topic that beats the others is repeated and the time is moved if another slot performs better.</li>"
+    "<li><b>Team capacity.</b> If less than 80% of what is scheduled is met two weeks in a row, go back to the minimum plan.</li></ul>",
 )
 dates = [
-    ("Jue 26 nov", "Thanksgiving", "Todas", "K&G Market con horario especial. Klean N Green NYC solo publica un agradecimiento breve en LinkedIn y Facebook; JDET Capital no publica ese día."),
-    ("Vie 27 y sáb 28 nov", "Black Friday y Small Business Saturday", "K&G Market", "Publicación e historias de comercio local."),
-    ("Mar 8 dic", "Inmaculada Concepción (feriado en Perú)", "Klean N Green Perú", "No cae en día de publicación."),
-    ("Jue 24 y vie 25 dic", "Nochebuena y Navidad", "Todas", "Saludo en historias. Sin publicación fija el 25."),
-    ("Jue 31 dic y vie 1 ene", "Fin de año y Año Nuevo", "Todas", "Saludo y horarios. Sin publicación fija el 1."),
-    ("Mié 6 ene", "Día de Reyes", "K&G Market", "Publicación con los productos disponibles, si aplica."),
-    ("Lun 18 ene", "Martin Luther King Jr. Day (feriado federal)", "Klean N Green NYC y JDET Capital", "Oficinas cerradas. Publicar el martes 19."),
+    ("Thu Nov 26", "Thanksgiving", "All", "K&G Market with special hours. Klean N Green NYC only posts a short thank-you on LinkedIn and Facebook; JDET Capital doesn't post that day."),
+    ("Fri Nov 27 and Sat Nov 28", "Black Friday and Small Business Saturday", "K&G Market", "Post and stories about local commerce."),
+    ("Tue Dec 8", "Immaculate Conception (holiday in Peru)", "Klean N Green Peru", "Doesn't fall on a posting day."),
+    ("Thu Dec 24 and Fri Dec 25", "Christmas Eve and Christmas", "All", "Greeting in stories. No fixed post on the 25th."),
+    ("Thu Dec 31 and Fri Jan 1", "Year-end and New Year", "All", "Greeting and hours. No fixed post on the 1st."),
+    ("Wed Jan 6", "Three Kings Day", "K&G Market", "Post with the available products, if applicable."),
+    ("Mon Jan 18", "Martin Luther King Jr. Day (federal holiday)", "Klean N Green NYC and JDET Capital", "Offices closed. Post on Tuesday 19."),
 ]
 dr = "".join(
     f"<tr><th scope='row'>{e(a)}</th><td>{e(b)}</td><td>{e(c)}</td><td>{e(d)}</td></tr>"
     for a, b, c, d in dates
 )
 rs += section(
-    "Fechas clave",
-    '<div class="tablewrap"><table class="rev wide"><thead><tr><th>Fecha</th><th>Qué</th><th>Marcas</th><th>Qué hacer</th></tr></thead>'
+    "Key dates",
+    '<div class="tablewrap"><table class="rev wide"><thead><tr><th>Date</th><th>What</th><th>Brands</th><th>What to do</th></tr></thead>'
     f"<tbody>{dr}</tbody></table></div>",
 )
 
 # ---------------------------------------------------------------------------
-# ENSAMBLE
+# ASSEMBLY
 # ---------------------------------------------------------------------------
 BRANDS = B.BRANDS
 tabs = "".join(
@@ -569,11 +580,11 @@ tabs = "".join(
 )
 
 panels = ""
-panels += B.panel("resumen", "b-all", "Resumen", "Fases, semanas, revisiones, reglas de ajuste y fechas clave de las cuatro marcas.", rs)
-panels += B.panel("kg-market", "b-kg", "K&G Market", "Productos peruanos y caribeños en Brooklyn.", kg, True)
-panels += B.panel("klean-nyc", "b-klean", "Klean N Green NYC", "Servicios de limpieza para hogares, oficinas y administración de propiedades en Nueva York.", kn, True)
-panels += B.panel("jdet-capital", "b-jdet", "JDET Capital", "Calendario provisional hasta definir la actividad y el público.", jd, True)
-panels += B.panel("klean-peru", "b-peru", "Klean N Green Perú", "Calendario provisional hasta conectar la primera red.", pe, True)
+panels += B.panel("resumen", "b-all", "Summary", "Phases, weeks, reviews, adjustment rules and key dates for the four brands.", rs)
+panels += B.panel("kg-market", "b-kg", "K&G Market", "Peruvian and Caribbean products in Brooklyn.", kg, True)
+panels += B.panel("klean-nyc", "b-klean", "Klean N Green NYC", "Cleaning services for homes, offices and property management in New York.", kn, True)
+panels += B.panel("jdet-capital", "b-jdet", "JDET Capital", "Provisional calendar until the activity and audience are defined.", jd, True)
+panels += B.panel("klean-peru", "b-peru", "Klean N Green Peru", "Provisional calendar until the first network is connected.", pe, True)
 
 EXTRA_CSS = """
 .wlist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
@@ -596,25 +607,25 @@ EXTRA_CSS = """
 """
 
 TOP = """<header class="top">
-<p class="eyebrow">13 semanas: 9 de noviembre de 2026 al 7 de febrero de 2027</p>
-<h1>Calendario de contenidos a 3 meses</h1>
-<p class="lead">Cuatro semanas detalladas día por día y nueve semanas por tema para K&amp;G Market, Klean N Green NYC, JDET Capital y Klean N Green Perú. Cuatro revisiones con datos de Metricool ajustan lo que sigue.</p>
+<p class="eyebrow">13 weeks: November 9, 2026 to February 7, 2027</p>
+<h1>3-month content calendar</h1>
+<p class="lead">Four weeks detailed day by day and nine weeks by topic for K&amp;G Market, Klean N Green NYC, JDET Capital and Klean N Green Peru. Four reviews with Metricool data adjust what follows.</p>
 </header>"""
 
 FOOT = """<footer>
 <div class="fnt">
-<p><b>Cómo usarlo.</b> Las horas son de Nueva York, salvo las de Klean N Green Perú, que son de Lima. Las etiquetas Referencia e Hipótesis tienen el mismo significado que en la página de estrategia. Los textos de cada publicación y los conjuntos de hashtags se adaptan de esa página.</p>
-<p>Los datos entre corchetes se completan con información real de cada negocio. Salvo el ají amarillo y la chicha morada, que ya aparecen en publicaciones de la cuenta, los productos y platos se confirman con la tienda.</p>
-<p>Las semanas 5 a 13 se detallan día por día en cada revisión. JDET Capital y Klean N Green Perú dependen de las definiciones de la semana 1, y sus fechas se corren si no se cierran.</p>
+<p><b>How to use it.</b> Times are New York time, except those of Klean N Green Peru, which are Lima time. The Reference and Hypothesis labels have the same meaning as on the strategy page. The text of each post and the hashtag sets are adapted from that page.</p>
+<p>Items in brackets are filled in with real information from each business. Except for ají amarillo and chicha morada, which already appear in the account's posts, products and dishes are confirmed with the store.</p>
+<p>Weeks 5 to 13 are detailed day by day at each review. JDET Capital and Klean N Green Peru depend on the week 1 definitions, and their dates shift if they are not settled.</p>
 </div>
 </footer>"""
 
 DOC = f"""<!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Calendario de Contenidos</title>
+<title>Content Calendar</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="{B.FONTS}" rel="stylesheet">
@@ -622,7 +633,7 @@ DOC = f"""<!DOCTYPE html>
 </head>
 <body>
 {TOP}
-<nav class="tabs" id="tabs"><div class="tablist" role="tablist" aria-label="Marcas">{tabs}</div></nav>
+<nav class="tabs" id="tabs"><div class="tablist" role="tablist" aria-label="Brands">{tabs}</div></nav>
 <main>
 {panels}
 </main>

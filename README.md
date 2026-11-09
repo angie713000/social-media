@@ -1,12 +1,12 @@
 # Contenidos por marca
 
 Calendario de 3 meses y publicaciones de 4 semanas para K&G Market, Klean N Green NYC, JDET Capital y Klean N Green Perú.
-Todo vive en un solo archivo, `contenidos-por-marca.html`, con una pestaña por marca.
+Todo vive en un solo archivo, `contenidos-por-marca.html`, con una pestaña por marca. El archivo completo está en inglés; solo los captions de K&G Market son bilingües (inglés y español) a propósito, porque se publican así en Metricool.
 
 ## Cómo está armado el HTML
 
 - **Resumen:** fases, semanas, revisiones, reglas de ajuste y fechas clave de las cuatro marcas.
-- **K&G Market y Klean NYC:** pestañas Calendario (español), Overview y Week 1 a Week 4 (posts en inglés, con prompts, guiones y captions).
+- **K&G Market y Klean NYC:** pestañas Calendar, Overview y Week 1 a Week 4 (con prompts, guiones y captions).
 - **JDET Capital y Klean Perú:** solo Calendario.
 
 ## Cómo regenerarlo
@@ -15,7 +15,7 @@ Todo vive en un solo archivo, `contenidos-por-marca.html`, con una pestaña por 
 python3 build_all.py
 ```
 
-Genera `contenidos-por-marca.html` en la raíz. Solo usa la biblioteca estándar de Python 3. Los HTML intermedios quedan en `src/` y no se suben.
+Genera `contenidos-por-marca.html` en la raíz. Solo usa la biblioteca estándar de Python 3. La interfaz compartida sale en inglés cuando `CONTENT_LANG=en` (es el valor por defecto de los tres scripts del HTML unificado); `src/build_estrategia.py` ejecutado solo genera la página de estrategia en español. Los HTML intermedios quedan en `src/` y no se suben.
 
 ## Dónde se cambia cada cosa (`src/`)
 
