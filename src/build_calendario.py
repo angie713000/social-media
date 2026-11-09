@@ -359,7 +359,7 @@ kn += section(
     "</tbody></table></div>"
     '<p class="note">The LinkedIn drafts for November 24 and December 3 currently point to the contact page with UTM parameters. If the article is published in time, the link is changed; if not, they stay as they are.</p>'
     '<ul class="rules">'
-    "<li><b>Before publishing.</b> Fix the invalid robots.txt block and the duplicate pages /dtut/ and /new-clients/ flagged in the SEO assessment.</li>"
+    "<li><b>Site status (Nov 9).</b> Done: /dtut/ and /new-clients/ are now noindex, so they no longer compete with the main pages. The robots.txt lines without a User-agent are ignored by Google and block nothing, so they were left as they are. Every service page has its own title, description and a single H1, and the old addresses (/air-bnb/, /commercial-cleaning-nyc/, /residential-cleaning-nyc/, /post-construction-cleaning-nyc/) redirect with a 301. <b>Still open:</b> /post-renovation-cleaning/ repeats the full text of /post-construction-cleaning/. Decide whether to rewrite one, redirect one or mark one as canonical before linking articles to either.</li>"
     "<li><b>Each article.</b> A single question, a clear title, a featured image and the closing button to request an estimate with UTM parameters.</li></ul>",
 )
 kn += section(

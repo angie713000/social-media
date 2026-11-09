@@ -50,6 +50,13 @@ Genera `contenidos-por-marca.html` en la raíz. Solo usa la biblioteca estándar
 - Semanas 1 y 2 ya están programadas en Metricool con su imagen o video: solo se propone cambiar el texto (se muestra el texto actual y el nuevo). Semanas 3 y 4 están reescritas por completo como borradores.
 - Estado: propuesta para revisión. Metricool no se modifica hasta que cada pieza esté aprobada.
 
+## Estado del SEO de los sitios (9 de noviembre de 2026)
+
+- **Klean N Green NYC (kleannyc.com):** texto alternativo en imágenes, un solo H1 en las 8 páginas de servicio, 3 redirecciones 301 nuevas, /dtut/ y /new-clients/ en noindex, teléfono del pie corregido a (347) 883-4766.
+- **K&G Market (kngmarket.com):** Yoast SEO instalado y configurado; títulos y descripciones en páginas y categorías; un H1 por página; texto alternativo en 1.894 imágenes de producto; se quitó el noindex de WordPress; sitemap enviado a Search Console y la home enviada a indexar. Puede tardar de días a semanas en aparecer en Google.
+- **Pendiente de decisión:** las páginas /post-renovation-cleaning/ y /post-construction-cleaning/ de Klean repiten el mismo texto (reescribir una, redirigir o marcar canonical). Teléfono de K&G sin confirmar (347-365-9656 en el sitio y en Google, 347-739-5457 en un extracto de Facebook). Actualizaciones de plugins y tema en ambos sitios. Horarios especiales de feriados de K&G (los `[hours]` de los captions).
+- Los cambios del sitio se hicieron directamente en WordPress; no hay código del sitio en este repositorio. Solo se actualizaron las notas del HTML.
+
 ## Revisiones previstas
 
 Viernes 20 de noviembre, 4 de diciembre, 18 de diciembre y 29 de enero.

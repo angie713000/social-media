@@ -155,7 +155,7 @@ def overview_sections(brand):
     if brand == "kg":
         checks = [
             "**Products.** Every video mentions products the store should have on that date. Confirm stock before scheduling, or change the line. The scripts say \"ask us\" where stock is not certain.",
-            "**Hours.** The captions of Nov 24 and Nov 25 contain [hours]. Fill them in or delete the line.",
+            "**Hours.** The captions of Nov 24 and Nov 25 contain [hours]. The website lists Mon to Sat 7:30am to 8pm and Sun 7:30am to 6:30pm: confirm those apply that week, then fill them in or delete the line.",
             "**Thursday, November 26.** It is Thanksgiving, so there is no TikTok that day. Week 3 moves to Tuesday and Wednesday.",
             "**Facts.** The produce tips are general and common (ripeness, storage, safe cooking of yuca). If the store prefers different advice, change the script.",
             "**Spanish.** The scripts are in English, with one short Spanish line in the first video. The captions carry the Spanish. Tell me if the store wants more Spanish in the voice.",

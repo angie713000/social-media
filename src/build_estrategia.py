@@ -612,7 +612,7 @@ rs += section(
 rs += section(
     "Pendiente",
     callout(
-        "La revisión de SEO de los sitios web sigue abierta: kngmarket.com y kleannyc.com no se pudieron abrir desde aquí. Se retoma con el texto de las páginas, capturas o una sesión con Chrome abierto, y con las direcciones de JDET Capital y Klean N Green Perú.",
+        "La revisión de SEO de kngmarket.com y kleannyc.com se hizo el 9 de noviembre de 2026 con Chrome y las correcciones ya están aplicadas (títulos, descripciones, H1, texto alternativo, redirecciones y noindex en páginas internas). Siguen abiertas las páginas web de JDET Capital y Klean N Green Perú, y decidir qué hacer con el texto repetido entre las páginas de post-construcción y post-renovación de Klean.",
     ),
 )
 
@@ -877,7 +877,7 @@ DOC = f"""<!DOCTYPE html>
 <p><b>Fuentes y límites.</b> Las cifras vienen de las cuentas conectadas en Metricool (K&amp;G Market, Klean N Green NYC y JDET Capital) al 7 de noviembre de 2026. Klean N Green Perú no tiene redes conectadas.</p>
 <p>Los horarios de referencia son promedios generales de Metricool para la semana del 9 al 15 de noviembre. Los de Instagram son hipótesis porque la cuenta no tiene historial. Las metas son propuestas, no proyecciones.</p>
 <p>Hashtags: Metricool recomienda de 3 a 5 por publicación en Instagram (<a href="https://metricool.com/blog/how-many-hashtags-to-use/">guía de Metricool</a>). Las fuentes difieren sobre el tope vigente, de 5 a 30, por lo que conviene confirmarlo al programar. No se validó el volumen de cada hashtag.</p>
-<p>No se revisaron las páginas web de las marcas, por lo que no hay hallazgos de SEO en este documento.</p>
+<p>Las cifras de este documento no incluyen datos de SEO. La revisión de las páginas web de K&amp;G Market y Klean N Green NYC se resume en el README del repositorio.</p>
 </div>
 </footer>
 <script>{JS}</script>
