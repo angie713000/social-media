@@ -99,6 +99,7 @@ OVERRIDES = """
 css = css_pack + "\n/* Calendar rules */\n" + "\n".join(extra) + "\n" + OVERRIDES
 head = head.replace(css_pack, css)
 head = re.sub(r"<title>.*?</title>", "<title>Content by brand: calendar and posts</title>", head, flags=re.S)
+head = head.replace('<meta name="viewport" content="width=device-width, initial-scale=1">', '<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="robots" content="noindex, nofollow">', 1)
 assert 'lang="en"' in head and "Content by brand" in head and "Calendar rules" in head
 
 JS = """
